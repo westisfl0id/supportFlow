@@ -3,6 +3,7 @@ package com.supportflow.comment.controller;
 import com.supportflow.comment.dto.CommentResponse;
 import com.supportflow.comment.dto.CreateCommentRequest;
 import com.supportflow.comment.service.CommentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,7 +17,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public CommentResponse create(@RequestBody CreateCommentRequest request) {
+    public CommentResponse create(@Valid @RequestBody CreateCommentRequest request) {
         return commentService.create(request);
     }
 
