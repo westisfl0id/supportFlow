@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/tickets/{ticketId}/comments")
 @RequiredArgsConstructor
@@ -25,6 +27,11 @@ public class CommentController {
             @Valid @RequestBody CreateCommentRequest request) {
 
         return commentService.create(ticketId, userId, request);
+    }
+
+    @GetMapping
+    public List<CommentResponse> getCommentsByTicket(@PathVariable @Positive Long ticketId) {
+        return commentService.getCommentsByTicket(ticketId);
     }
 
 }
