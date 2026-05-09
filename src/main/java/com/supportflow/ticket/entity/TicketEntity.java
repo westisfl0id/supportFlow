@@ -21,33 +21,51 @@ public class TicketEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
-    @Column(length = 5000)
+    @Column(length = 5000, nullable = false)
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TicketStatus status;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TicketPriority priority;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id", nullable = false)
     private UserEntity createdBy;
 
-    @ManyToOne
-    @JoinColumn(name = "assigned_to")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_id")
     private UserEntity assignedTo;
 
     @OneToMany(mappedBy = "ticket")
     private List<CommentEntity> comments;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.status = TicketStatus.NEW;
+        LocalDateTime now = LocalDateTime.now();
+
+        this.createdAt = now;
+        this.updatedAt = now;
+
+        if (this.status == null) {
+            this.status = TicketStatus.NEW;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
