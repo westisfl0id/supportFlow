@@ -1,9 +1,11 @@
 package com.supportflow.exception;
 
 import com.supportflow.comment.exception.CommentNotFoundException;
+import com.supportflow.ticket.exception.TicketAlreadyClosedException;
 import com.supportflow.ticket.exception.TicketNotFoundException;
 import com.supportflow.user.exception.InvalidUserDataException;
 import com.supportflow.user.exception.UserAlreadyExistsException;
+import com.supportflow.user.exception.UserIsNotAgentException;
 import com.supportflow.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +34,7 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("INVALID_USER_DATA", ex.getMessage()));
     }
 
-    @ExceptionHandler(CommentNotFoundException.class)
+    @ExceptionHandler(TicketNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTicketNotFound(TicketNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse("TICKET_NOT_FOUND", ex.getMessage()));
@@ -54,6 +56,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse("ACCESS_DENIED", "Access denied"));
+    }
+
+    @ExceptionHandler(TicketAlreadyClosedException.class)
+    public ResponseEntity<ErrorResponse> handleTicketAlreadyClosed(TicketAlreadyClosedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("TICKET_ALREADY_CLOSED", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UserIsNotAgentException.class)
+    public ResponseEntity<ErrorResponse> handleUserIsNotAgent(UserIsNotAgentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("USER_IS_NOT_AGENT", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

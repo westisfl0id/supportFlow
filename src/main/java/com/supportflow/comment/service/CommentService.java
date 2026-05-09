@@ -33,7 +33,7 @@ public class CommentService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (ticket.getStatus() == TicketStatus.CLOSED) {
-            throw new IllegalStateException("Cannot add comment to closed ticket");
+            throw new TicketAlreadyClosedException(ticketId);
         }
         CommentEntity comment = CommentEntity.builder()
                 .message(request.message())
@@ -49,7 +49,7 @@ public class CommentService {
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByTicket(Long ticketId) {
         if (!ticketRepository.existsById(ticketId)) {
-            throw new TicketAlreadyClosedException(ticketId);
+            throw new TicketNotFoundException(ticketId);
         }
 
         return commentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)
