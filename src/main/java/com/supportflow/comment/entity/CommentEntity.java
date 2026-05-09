@@ -4,7 +4,6 @@ import com.supportflow.ticket.entity.TicketEntity;
 import com.supportflow.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,12 +23,13 @@ public class CommentEntity {
     private TicketEntity ticket;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @JoinColumn(name = "created_by_id", nullable = false)
+    private UserEntity createdBy;
     
     @Column(length = 3000, nullable = false)
     private String message;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
