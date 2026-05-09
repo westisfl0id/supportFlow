@@ -11,9 +11,5 @@ public record CreateTicketRequest (
         String description,
 
         @NotNull
-        TicketPriority priority,
-
-        @NotNull
-        @Positive
-        Long userId
+        TicketPriority priority
 ){}
