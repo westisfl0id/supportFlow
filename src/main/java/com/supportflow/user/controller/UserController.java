@@ -1,6 +1,7 @@
 package com.supportflow.user.controller;
 
 import com.supportflow.user.dto.CreateUserRequest;
+import com.supportflow.user.dto.UpdateUserStatusRequest;
 import com.supportflow.user.dto.UserResponse;
 import com.supportflow.user.service.UserService;
 import jakarta.validation.Valid;
@@ -32,6 +33,14 @@ public class UserController {
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable @Positive Long id) {
         return userService.getUserById(id);
+    }
+
+    @PatchMapping("/{id}/status")
+    public UserResponse updateUserStatus(
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody UpdateUserStatusRequest request
+        ) {
+        return userService.updateUserStatus(id, request);
     }
 
 }
