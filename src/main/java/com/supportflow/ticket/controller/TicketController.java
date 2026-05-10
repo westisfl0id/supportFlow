@@ -4,6 +4,8 @@ import com.supportflow.ticket.dto.AssignTicketRequest;
 import com.supportflow.ticket.dto.CreateTicketRequest;
 import com.supportflow.ticket.dto.TicketResponse;
 import com.supportflow.ticket.dto.UpdateTicketStatusRequest;
+import com.supportflow.ticket.enums.TicketPriority;
+import com.supportflow.ticket.enums.TicketStatus;
 import com.supportflow.ticket.service.TicketService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -11,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -34,6 +35,16 @@ public class TicketController {
         return ticketService.getAllTickets();
     }
 
+    @GetMapping("/tickets/search")
+    public List<TicketResponse> searchTickets(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) TicketPriority priority,
+            @RequestParam(required = false) @Positive Long createdById,
+            @RequestParam(required = false) @Positive Long assignedToId
+            ) {
+        return ticketService.searchTickets(status, priority, createdById, assignedToId);
+    }
+
     @GetMapping("/users/{userId}/tickets")
     public List<TicketResponse> getTicketsByUser(@PathVariable @Positive Long userId) {
         return ticketService.getTicketsByUser(userId);
@@ -54,6 +65,16 @@ public class TicketController {
             @PathVariable @Positive Long id,
             @Valid @RequestBody UpdateTicketStatusRequest request) {
         return ticketService.updateStatus(id, request);
+    }
+
+    @PatchMapping("/tickets/{id}/resolve")
+    public TicketResponse resolveTicket(@PathVariable @Positive Long id) {
+        return ticketService.resolveTicket(id);
+    }
+
+    @PatchMapping("/tickets/{id}/close")
+    public TicketResponse closeTicket(@PathVariable @Positive Long id) {
+        return ticketService.closeTicket(id);
     }
 
     @PatchMapping("/tickets/{id}/assign")
