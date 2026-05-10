@@ -52,6 +52,22 @@ public class TicketEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "first_response_deadline")
+    private LocalDateTime firstResponseDeadline;
+
+    @Column(name = "resolution_deadline")
+    private LocalDateTime resolutionDeadline;
+
+    @Column(name = "first_responded_at")
+    private LocalDateTime firstRespondedAt;
+
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
+
+    @Column(name = "sla_breached", nullable = false)
+    @Builder.Default
+    private Boolean slaBreached = false;
+
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();

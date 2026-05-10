@@ -10,11 +10,14 @@ import com.supportflow.ticket.exception.TicketAlreadyClosedException;
 import com.supportflow.ticket.exception.TicketNotFoundException;
 import com.supportflow.ticket.repository.TicketRepository;
 import com.supportflow.user.entity.UserEntity;
+import com.supportflow.user.enums.UserRole;
 import com.supportflow.user.exception.UserNotFoundException;
 import com.supportflow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -35,6 +38,11 @@ public class CommentService {
         if (ticket.getStatus() == TicketStatus.CLOSED) {
             throw new TicketAlreadyClosedException(ticketId);
         }
+
+        if (user.getRole() == UserRole.AGENT && ticket.getFirstRespondedAt() == null) {
+            ticket.setFirstRespondedAt(LocalDateTime.now());
+        }
+
         CommentEntity comment = CommentEntity.builder()
                 .message(request.message())
                 .ticket(ticket)

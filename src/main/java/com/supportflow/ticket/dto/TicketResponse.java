@@ -15,6 +15,11 @@ public record TicketResponse (
         Long assignedToId,
         String assignedToName,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        LocalDateTime firstResponseDeadline,
+        LocalDateTime resolutionDeadline,
+        LocalDateTime firstRespondedAt,
+        LocalDateTime resolvedAt,
+        Boolean slaBreached
 ){
 }

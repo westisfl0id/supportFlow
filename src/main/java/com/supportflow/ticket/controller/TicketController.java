@@ -55,6 +55,11 @@ public class TicketController {
         return ticketService.getTicketsByAgent(agentId);
     }
 
+    @GetMapping("/tickets/sla/breached")
+    public List<TicketResponse> getSlaBreachedTickets() {
+        return ticketService.getSlaBreachedTickets();
+    }
+
     @GetMapping("/tickets/{id}")
     public TicketResponse getTicketById(@PathVariable @Positive Long id) {
         return ticketService.getTicketById(id);
@@ -84,4 +89,6 @@ public class TicketController {
             ) {
         return ticketService.assignTicket(id, request);
     }
+
+
 }

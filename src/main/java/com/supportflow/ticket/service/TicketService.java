@@ -1,5 +1,6 @@
     package com.supportflow.ticket.service;
 
+    import com.supportflow.sla.service.SlaService;
     import com.supportflow.ticket.dto.AssignTicketRequest;
     import com.supportflow.ticket.dto.CreateTicketRequest;
     import com.supportflow.ticket.dto.TicketResponse;
@@ -20,6 +21,8 @@
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
+
+    import java.time.LocalDateTime;
     import java.util.List;
 
     @Service
@@ -27,11 +30,15 @@
     public class TicketService {
         private final TicketRepository ticketRepository;
         private final UserRepository userRepository;
+        private final SlaService slaService;
 
         @Transactional
         public TicketResponse createTicket(Long userId, CreateTicketRequest request) {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new UserNotFoundException(userId));
+
+
+            LocalDateTime now = LocalDateTime.now();
 
             TicketEntity ticket = TicketEntity.builder()
                     .title(request.title())
@@ -39,6 +46,13 @@
                     .priority(request.priority())
                     .createdBy(user)
                     .status(TicketStatus.NEW)
+                    .firstResponseDeadline(
+                            slaService.calculateFirstResponseDeadline(request.priority(), now)
+                    )
+                    .resolutionDeadline(
+                            slaService.calculateResolutionDeadline(request.priority(), now)
+                    )
+                    .slaBreached(false)
                     .build();
 
             ticketRepository.save(ticket);
@@ -87,6 +101,14 @@
                     .orElseThrow(() -> new TicketNotFoundException(id));
 
             return map(ticket);
+        }
+
+        @Transactional(readOnly = true)
+        public List<TicketResponse> getSlaBreachedTickets() {
+            return ticketRepository.findBySlaBreachedTrue()
+                    .stream()
+                    .map(this::map)
+                    .toList();
         }
 
         @Transactional
@@ -144,6 +166,10 @@
                 throw new TicketAlreadyClosedException(id);
             }
 
+            if (ticket.getResolvedAt() == null) {
+                ticket.setResolvedAt(LocalDateTime.now());
+            }
+
             ticket.setStatus(TicketStatus.RESOLVED);
 
             return map(ticket);
@@ -178,7 +204,12 @@
                     assignedTo != null ? assignedTo.getId() : null,
                     assignedTo != null ? assignedTo.getName() : null,
                     ticket.getCreatedAt(),
-                    ticket.getUpdatedAt()
+                    ticket.getUpdatedAt(),
+                    ticket.getFirstResponseDeadline(),
+                    ticket.getResolutionDeadline(),
+                    ticket.getFirstRespondedAt(),
+                    ticket.getResolvedAt(),
+                    ticket.getSlaBreached()
             );
         }
     }
