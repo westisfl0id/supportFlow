@@ -10,6 +10,7 @@ import com.supportflow.user.exception.UserAlreadyExistsException;
 import com.supportflow.user.exception.UserNotFoundException;
 import com.supportflow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
@@ -28,7 +30,7 @@ public class UserService {
         UserEntity user = UserEntity.builder()
                 .name(request.name())
                 .email(request.email())
-                .password(request.password())
+                .password(passwordEncoder.encode(request.password()))
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .build();
