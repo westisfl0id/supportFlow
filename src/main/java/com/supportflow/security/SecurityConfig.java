@@ -4,6 +4,7 @@ import com.supportflow.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,6 +28,26 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/users/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/users/*/tickets").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/users/*/tickets").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/agents/*/tickets").hasAnyRole("AGENT", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/tickets").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/search").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/sla/breached").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/*").hasAnyRole("USER", "AGENT", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/tickets/*/assign").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/tickets/*/status").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/tickets/*/resolve").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/tickets/*/close").hasAnyRole("AGENT", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
 
                         .anyRequest().authenticated()
                 )
