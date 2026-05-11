@@ -6,6 +6,7 @@ import com.supportflow.auth.dto.RegisterRequest;
 import com.supportflow.auth.exception.EmailAlreadyExistsException;
 import com.supportflow.auth.exception.InvalidCredentialsException;
 import com.supportflow.auth.exception.UserBlockedException;
+import com.supportflow.security.jwt.JwtService;
 import com.supportflow.user.entity.UserEntity;
 import com.supportflow.user.enums.UserRole;
 import com.supportflow.user.enums.UserStatus;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -37,12 +39,9 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return new AuthResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getRole()
-        );
+        String token = jwtService.generateToken(user);
+
+        return mapToAuthResponse(user, token);
     }
 
     @Transactional(readOnly = true)
@@ -58,12 +57,18 @@ public class AuthService {
             throw new UserBlockedException();
         }
 
+        String token = jwtService.generateToken(user);
+
+        return  mapToAuthResponse(user, token);
+    }
+
+    private AuthResponse mapToAuthResponse(UserEntity user, String token) {
         return new AuthResponse(
+                token,
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole()
         );
-
     }
 }
