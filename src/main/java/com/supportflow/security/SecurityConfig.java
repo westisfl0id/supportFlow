@@ -36,18 +36,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/*/tickets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/agents/*/tickets").hasAnyRole("AGENT", "ADMIN")
 
+                        .requestMatchers(HttpMethod.POST, "/tickets").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/tickets/my").hasRole("USER")
+
                         .requestMatchers(HttpMethod.GET, "/tickets").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/tickets/search").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/tickets/sla/breached").hasAnyRole("AGENT", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
+
                         .requestMatchers(HttpMethod.GET, "/tickets/*").hasAnyRole("USER", "AGENT", "ADMIN")
 
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/assign").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/status").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/resolve").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/close").hasAnyRole("AGENT", "ADMIN")
-
-                        .requestMatchers(HttpMethod.POST, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
 
                         .anyRequest().authenticated()
                 )

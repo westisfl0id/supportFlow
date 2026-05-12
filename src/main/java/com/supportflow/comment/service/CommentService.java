@@ -4,15 +4,15 @@ import com.supportflow.comment.dto.CommentResponse;
 import com.supportflow.comment.dto.CreateCommentRequest;
 import com.supportflow.comment.entity.CommentEntity;
 import com.supportflow.comment.repository.CommentRepository;
+import com.supportflow.security.CurrentUserService;
 import com.supportflow.ticket.entity.TicketEntity;
 import com.supportflow.ticket.enums.TicketStatus;
 import com.supportflow.ticket.exception.TicketAlreadyClosedException;
 import com.supportflow.ticket.exception.TicketNotFoundException;
 import com.supportflow.ticket.repository.TicketRepository;
+import com.supportflow.ticket.service.TicketAccessService;
 import com.supportflow.user.entity.UserEntity;
 import com.supportflow.user.enums.UserRole;
-import com.supportflow.user.exception.UserNotFoundException;
-import com.supportflow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,28 +25,30 @@ import java.util.List;
 public class CommentService {
     private final CommentRepository commentRepository;
     private final TicketRepository ticketRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
+    private final TicketAccessService ticketAccessService;
 
     @Transactional
-    public CommentResponse create(Long ticketId, Long userId, CreateCommentRequest request) {
+    public CommentResponse createComment(Long ticketId, CreateCommentRequest request) {
         TicketEntity ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        UserEntity currentUser = currentUserService.getCurrentUser();
+
+        ticketAccessService.checkCanCommentTicket(currentUser, ticket);
 
         if (ticket.getStatus() == TicketStatus.CLOSED) {
             throw new TicketAlreadyClosedException(ticketId);
         }
 
-        if (user.getRole() == UserRole.AGENT && ticket.getFirstRespondedAt() == null) {
+        if (currentUser.getRole() == UserRole.AGENT && ticket.getFirstRespondedAt() == null) {
             ticket.setFirstRespondedAt(LocalDateTime.now());
         }
 
         CommentEntity comment = CommentEntity.builder()
                 .message(request.message())
                 .ticket(ticket)
-                .createdBy(user)
+                .createdBy(currentUser)
                 .build();
 
         commentRepository.save(comment);
@@ -56,9 +58,13 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByTicket(Long ticketId) {
-        if (!ticketRepository.existsById(ticketId)) {
-            throw new TicketNotFoundException(ticketId);
-        }
+        TicketEntity ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        UserEntity currentUser = currentUserService.getCurrentUser();
+
+        ticketAccessService.checkCanViewTicket(currentUser, ticket);
+
 
         return commentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)
                 .stream()

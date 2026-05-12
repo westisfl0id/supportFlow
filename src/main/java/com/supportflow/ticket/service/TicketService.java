@@ -1,5 +1,6 @@
     package com.supportflow.ticket.service;
 
+    import com.supportflow.security.CurrentUserService;
     import com.supportflow.sla.service.SlaService;
     import com.supportflow.ticket.dto.AssignTicketRequest;
     import com.supportflow.ticket.dto.CreateTicketRequest;
@@ -31,29 +32,26 @@
         private final TicketRepository ticketRepository;
         private final UserRepository userRepository;
         private final SlaService slaService;
+        private final CurrentUserService currentUserService;
+        private final TicketAccessService ticketAccessService;
 
         @Transactional
         public TicketResponse createTicket(Long userId, CreateTicketRequest request) {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new UserNotFoundException(userId));
 
+            TicketEntity ticket = buildNewTicket(user, request);
 
-            LocalDateTime now = LocalDateTime.now();
+            ticketRepository.save(ticket);
 
-            TicketEntity ticket = TicketEntity.builder()
-                    .title(request.title())
-                    .description(request.description())
-                    .priority(request.priority())
-                    .createdBy(user)
-                    .status(TicketStatus.NEW)
-                    .firstResponseDeadline(
-                            slaService.calculateFirstResponseDeadline(request.priority(), now)
-                    )
-                    .resolutionDeadline(
-                            slaService.calculateResolutionDeadline(request.priority(), now)
-                    )
-                    .slaBreached(false)
-                    .build();
+            return map(ticket);
+        }
+
+        @Transactional
+        public TicketResponse createTicketForCurrentUser(CreateTicketRequest request) {
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            TicketEntity ticket = buildNewTicket(currentUser, request);
 
             ticketRepository.save(ticket);
 
@@ -66,6 +64,28 @@
                     .stream()
                     .map(this::map)
                     .toList();
+        }
+
+        @Transactional(readOnly = true)
+        public List<TicketResponse> getTicketsForCurrentUser() {
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            return ticketRepository.findByCreatedById(currentUser.getId())
+                    .stream()
+                    .map(this::map)
+                    .toList();
+        }
+
+        @Transactional(readOnly = true)
+        public TicketResponse getTicketById(Long id) {
+            TicketEntity ticket = ticketRepository.findById(id)
+                    .orElseThrow(() -> new TicketNotFoundException(id));
+
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            ticketAccessService.checkCanViewTicket(currentUser, ticket);
+
+            return map(ticket);
         }
 
         @Transactional(readOnly = true)
@@ -93,14 +113,6 @@
                     .stream()
                     .map(this::map)
                     .toList();
-        }
-
-        @Transactional(readOnly = true)
-        public TicketResponse getTicketById(Long id) {
-            TicketEntity ticket = ticketRepository.findById(id)
-                    .orElseThrow(() -> new TicketNotFoundException(id));
-
-            return map(ticket);
         }
 
         @Transactional(readOnly = true)
@@ -189,6 +201,25 @@
             return map(ticket);
         }
 
+        private TicketEntity buildNewTicket(UserEntity user, CreateTicketRequest request) {
+            LocalDateTime now = LocalDateTime.now();
+
+            return TicketEntity.builder()
+                    .title(request.title())
+                    .description(request.description())
+                    .priority(request.priority())
+                    .createdBy(user)
+                    .status(TicketStatus.NEW)
+                    .createdAt(now)
+                    .firstResponseDeadline(
+                            slaService.calculateFirstResponseDeadline(request.priority(), now)
+                    )
+                    .resolutionDeadline(
+                            slaService.calculateResolutionDeadline(request.priority(), now)
+                    )
+                    .slaBreached(false)
+                    .build();
+        }
 
         private TicketResponse map(TicketEntity ticket) {
             UserEntity assignedTo = ticket.getAssignedTo();

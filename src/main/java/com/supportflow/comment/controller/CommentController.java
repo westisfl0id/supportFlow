@@ -23,10 +23,9 @@ public class CommentController {
     @ResponseStatus(HttpStatus.CREATED)
     public CommentResponse create(
             @PathVariable @Positive Long ticketId,
-            @RequestParam @Positive Long userId,
             @Valid @RequestBody CreateCommentRequest request) {
 
-        return commentService.create(ticketId, userId, request);
+        return commentService.createComment(ticketId, request);
     }
 
     @GetMapping

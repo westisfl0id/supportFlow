@@ -30,9 +30,22 @@ public class TicketController {
         return ticketService.createTicket(userId, request);
     }
 
+    @PostMapping("/tickets")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TicketResponse createForCurrentUser(
+            @Valid @RequestBody CreateTicketRequest request
+    ) {
+        return ticketService.createTicketForCurrentUser(request);
+    }
+
     @GetMapping("/tickets")
     public List<TicketResponse> getAllTickets() {
         return ticketService.getAllTickets();
+    }
+
+    @GetMapping("/tickets/my")
+    public List<TicketResponse> getMyTickets() {
+        return ticketService.getTicketsForCurrentUser();
     }
 
     @GetMapping("/tickets/search")
