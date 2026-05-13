@@ -4,14 +4,17 @@ import com.supportflow.auth.exception.EmailAlreadyExistsException;
 import com.supportflow.auth.exception.InvalidCredentialsException;
 import com.supportflow.auth.exception.UserBlockedException;
 import com.supportflow.comment.exception.CommentNotFoundException;
+import com.supportflow.ticket.exception.InvalidTicketStatusTransitionException;
 import com.supportflow.ticket.exception.TicketAlreadyClosedException;
 import com.supportflow.ticket.exception.TicketNotFoundException;
 import com.supportflow.user.exception.InvalidUserDataException;
 import com.supportflow.user.exception.UserAlreadyExistsException;
 import com.supportflow.user.exception.UserIsNotAgentException;
 import com.supportflow.user.exception.UserNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -85,10 +88,28 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("TICKET_ALREADY_CLOSED", ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidTicketStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTicketStatusTransition(InvalidTicketStatusTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("INVALID_TICKET_STATUS_TRANSITION", ex.getMessage()));
+    }
+
     @ExceptionHandler(UserIsNotAgentException.class)
     public ResponseEntity<ErrorResponse> handleUserIsNotAgent(UserIsNotAgentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("USER_IS_NOT_AGENT", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("VALIDATION_ERROR", ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequestBody(HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_REQUEST_BODY", "Invalid request body"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

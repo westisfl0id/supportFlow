@@ -34,6 +34,7 @@
         private final SlaService slaService;
         private final CurrentUserService currentUserService;
         private final TicketAccessService ticketAccessService;
+        private final TicketStatusTransitionService ticketStatusTransitionService;
 
         @Transactional
         public TicketResponse createTicket(Long userId, CreateTicketRequest request) {
@@ -128,6 +129,15 @@
             TicketEntity ticket = ticketRepository.findById(id)
                     .orElseThrow(() -> new TicketNotFoundException(id));
 
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            ticketAccessService.checkCanManageTicket(currentUser, ticket);
+            ticketStatusTransitionService.validateTransition(ticket.getStatus(), request.status());
+
+            if (request.status() == TicketStatus.RESOLVED && ticket.getResolvedAt() == null) {
+                ticket.setResolvedAt(LocalDateTime.now());
+            }
+
             ticket.setStatus(request.status());
 
             return map(ticket);
@@ -144,6 +154,10 @@
             if (agent.getRole() != UserRole.AGENT) {
                 throw new UserIsNotAgentException(request.agentId());
             }
+
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            ticketAccessService.checkCanAssignTicket(currentUser, ticket, agent);
 
             ticket.setAssignedTo(agent);
 
@@ -174,9 +188,10 @@
             TicketEntity ticket = ticketRepository.findById(id)
                     .orElseThrow(() -> new TicketNotFoundException(id));
 
-            if (ticket.getStatus() == TicketStatus.CLOSED) {
-                throw new TicketAlreadyClosedException(id);
-            }
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            ticketAccessService.checkCanManageTicket(currentUser, ticket);
+            ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.RESOLVED);
 
             if (ticket.getResolvedAt() == null) {
                 ticket.setResolvedAt(LocalDateTime.now());
@@ -195,6 +210,11 @@
             if (ticket.getStatus() == TicketStatus.CLOSED) {
                 throw new TicketAlreadyClosedException(id);
             }
+
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            ticketAccessService.checkCanManageTicket(currentUser, ticket);
+            ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.CLOSED);
 
             ticket.setStatus(TicketStatus.CLOSED);
 

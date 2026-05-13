@@ -31,4 +31,35 @@ public class TicketAccessService {
 
         throw new ForbiddenActionException("You can`t comment this ticket");
     }
+
+    public void checkCanManageTicket(UserEntity user, TicketEntity ticket) {
+        if (user.getRole() == UserRole.ADMIN) {
+            return;
+        }
+
+        if (user.getRole() == UserRole.AGENT
+            && ticket.getAssignedTo() != null
+            && ticket.getAssignedTo().getId().equals(user.getId())) {
+            return;
+        }
+        throw new ForbiddenActionException("Only admin or assigned agent can manage this ticket");
+    }
+
+    public void checkCanAssignTicket(UserEntity user, TicketEntity ticket, UserEntity targetAgent) {
+        if (user.getRole() == UserRole.ADMIN) {
+            return;
+        }
+
+        if (user.getRole() == UserRole.AGENT) {
+            boolean agentAssignsToHimself = targetAgent.getId().equals(user.getId());
+            boolean ticketIsNotAssigned = ticket.getAssignedTo() == null;
+            boolean ticketAlreadyAssignedToThisAgent = ticket.getAssignedTo() != null
+                    && ticket.getAssignedTo().getId().equals(user.getId());
+
+            if (agentAssignsToHimself && (ticketIsNotAssigned || ticketAlreadyAssignedToThisAgent)) {
+                return;
+            }
+        }
+        throw new ForbiddenActionException("Agent can assign only unassigned tickets to himself");
+    }
 }
