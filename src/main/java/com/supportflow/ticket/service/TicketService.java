@@ -19,13 +19,14 @@
     import com.supportflow.user.exception.UserNotFoundException;
     import com.supportflow.user.repository.UserRepository;
     import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
-
     import java.time.LocalDateTime;
     import java.util.List;
 
+    @Slf4j
     @Service
     @RequiredArgsConstructor
     public class TicketService {
@@ -55,6 +56,8 @@
             TicketEntity ticket = buildNewTicket(currentUser, request);
 
             ticketRepository.save(ticket);
+
+            log.info("Ticket created: ticketId={}, createdById={}, priority={}", ticket.getId(), currentUser.getId(), ticket.getPriority());
 
             return map(ticket);
         }
@@ -134,11 +137,15 @@
             ticketAccessService.checkCanManageTicket(currentUser, ticket);
             ticketStatusTransitionService.validateTransition(ticket.getStatus(), request.status());
 
+            TicketStatus oldStatus = ticket.getStatus();
+
             if (request.status() == TicketStatus.RESOLVED && ticket.getResolvedAt() == null) {
                 ticket.setResolvedAt(LocalDateTime.now());
             }
 
             ticket.setStatus(request.status());
+
+            log.info("Ticket status changed: ticketId={}, oldStatus={}, newStatus={}, changedById={}", ticket.getId(), oldStatus, ticket.getStatus(), currentUser.getId());
 
             return map(ticket);
         }
@@ -160,6 +167,8 @@
             ticketAccessService.checkCanAssignTicket(currentUser, ticket, agent);
 
             ticket.setAssignedTo(agent);
+
+            log.info("Ticket assigned: ticketId={}, agentId={}, changedById={}", ticket.getId(), agent.getId(), currentUser.getId());
 
             return map(ticket);
         }
@@ -199,6 +208,8 @@
 
             ticket.setStatus(TicketStatus.RESOLVED);
 
+            log.info("Ticket resolved: ticketId={}, resolvedById={}", ticket.getId(), currentUser.getId());
+
             return map(ticket);
         }
 
@@ -217,6 +228,8 @@
             ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.CLOSED);
 
             ticket.setStatus(TicketStatus.CLOSED);
+
+            log.info("Ticket closed: ticketId={}, closedById={}", ticket.getId(), currentUser.getId());
 
             return map(ticket);
         }

@@ -12,10 +12,12 @@ import com.supportflow.user.enums.UserRole;
 import com.supportflow.user.enums.UserStatus;
 import com.supportflow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -39,6 +41,8 @@ public class AuthService {
 
         userRepository.save(user);
 
+        log.info("User register: userId={}, email={}, role={}", user.getId(), user.getEmail(), user.getRole());
+
         String token = jwtService.generateToken(user);
 
         return mapToAuthResponse(user, token);
@@ -56,6 +60,8 @@ public class AuthService {
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException();
         }
+
+        log.info("User logged in: userId={}, email={}, role={}", user.getId(), user.getEmail(), user.getRole());
 
         String token = jwtService.generateToken(user);
 

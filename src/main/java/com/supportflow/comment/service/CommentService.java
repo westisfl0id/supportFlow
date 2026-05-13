@@ -14,12 +14,13 @@ import com.supportflow.ticket.service.TicketAccessService;
 import com.supportflow.user.entity.UserEntity;
 import com.supportflow.user.enums.UserRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -52,6 +53,8 @@ public class CommentService {
                 .build();
 
         commentRepository.save(comment);
+
+        log.info("Comment created: commentId={}, ticketId={}, createdById={}", comment.getId(), ticket.getId(), currentUser.getId());
 
         return map(comment);
     }
