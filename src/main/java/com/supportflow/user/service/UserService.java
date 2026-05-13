@@ -1,6 +1,7 @@
 package com.supportflow.user.service;
 
 import com.supportflow.user.dto.CreateUserRequest;
+import com.supportflow.user.dto.UpdateUserRoleRequest;
 import com.supportflow.user.dto.UpdateUserStatusRequest;
 import com.supportflow.user.dto.UserResponse;
 import com.supportflow.user.entity.UserEntity;
@@ -58,6 +59,13 @@ public class UserService {
     public UserResponse updateUserStatus(Long id, UpdateUserStatusRequest request) {
         UserEntity user = findUserById(id);
         user.setStatus(request.status());
+        return map(user);
+    }
+
+    @Transactional
+    public UserResponse updateUserRole(Long id, UpdateUserRoleRequest request) {
+        UserEntity user = findUserById(id);
+        user.setRole(request.role());
         return map(user);
     }
 

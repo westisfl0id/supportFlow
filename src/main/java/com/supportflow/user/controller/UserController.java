@@ -1,12 +1,14 @@
 package com.supportflow.user.controller;
 
 import com.supportflow.user.dto.CreateUserRequest;
+import com.supportflow.user.dto.UpdateUserRoleRequest;
 import com.supportflow.user.dto.UpdateUserStatusRequest;
 import com.supportflow.user.dto.UserResponse;
 import com.supportflow.user.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,4 +45,11 @@ public class UserController {
         return userService.updateUserStatus(id, request);
     }
 
+    @PatchMapping("/{id}/role")
+    public UserResponse updateUserRole(
+            @PathVariable @Positive Long id,
+            @Valid@RequestBody UpdateUserRoleRequest request
+    ) {
+        return userService.updateUserRole(id, request);
+    }
 }
