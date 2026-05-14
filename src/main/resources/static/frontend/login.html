@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | SupportFlow</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<main class="auth-layout">
+    <section class="auth-card">
+        <h1>Вход</h1>
+        <p class="muted">Введите email и пароль</p>
+
+        <form id="loginForm" class="form">
+            <label>
+                Email
+                <input id="email" type="email" autocomplete="email" required>
+            </label>
+
+            <label>
+                Пароль
+                <input id="password" type="password" autocomplete="current-password" required>
+            </label>
+
+            <button class="button primary full" type="submit">Войти</button>
+        </form>
+
+        <p class="form-footer">
+            Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
+        </p>
+
+        <p id="message" class="message" aria-live="polite"></p>
+    </section>
+</main>
+
+<script type="module">
+    import { initLoginPage } from './js/auth.js';
+    initLoginPage();
+</script>
+</body>
+</html>

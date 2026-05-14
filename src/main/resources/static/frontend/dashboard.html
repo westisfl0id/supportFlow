@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | SupportFlow</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="topbar">
+    <div>
+        <h1>SupportFlow</h1>
+        <p id="currentUser" class="muted"></p>
+    </div>
+    <button id="logoutButton" class="button secondary" type="button">Выйти</button>
+</header>
+
+<main class="page">
+    <section id="message" class="message hidden" aria-live="polite"></section>
+
+    <section id="createTicketSection" class="panel hidden">
+        <div class="panel-header">
+            <h2>Создать тикет</h2>
+        </div>
+
+        <form id="createTicketForm" class="grid-form">
+            <label>
+                Заголовок
+                <input id="ticketTitle" type="text" required>
+            </label>
+
+            <label>
+                Приоритет
+                <select id="ticketPriority" required>
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM" selected>MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                    <option value="CRITICAL">CRITICAL</option>
+                </select>
+            </label>
+
+            <label class="span-2">
+                Описание
+                <textarea id="ticketDescription" rows="4" required></textarea>
+            </label>
+
+            <button class="button primary" type="submit">Создать</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 id="ticketsTitle">Тикеты</h2>
+                <p id="ticketsSubtitle" class="muted"></p>
+            </div>
+            <div class="actions-row">
+                <button id="reloadTicketsButton" class="button secondary" type="button">Обновить</button>
+                <button id="slaBreachedButton" class="button danger hidden" type="button">SLA breached</button>
+            </div>
+        </div>
+
+        <form id="ticketFilters" class="filters hidden">
+            <select id="filterStatus">
+                <option value="">Все статусы</option>
+                <option value="NEW">NEW</option>
+                <option value="OPEN">OPEN</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="WAITING">WAITING</option>
+                <option value="RESOLVED">RESOLVED</option>
+                <option value="CLOSED">CLOSED</option>
+            </select>
+
+            <select id="filterPriority">
+                <option value="">Все приоритеты</option>
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+            </select>
+
+            <input id="filterCreatedById" type="number" min="1" placeholder="createdById">
+            <input id="filterAssignedToId" type="number" min="1" placeholder="assignedToId">
+
+            <button class="button secondary" type="submit">Фильтр</button>
+            <button id="clearFiltersButton" class="button ghost" type="button">Сбросить</button>
+        </form>
+
+        <div id="ticketsContainer" class="cards-list"></div>
+    </section>
+
+    <section id="usersSection" class="panel hidden">
+        <div class="panel-header">
+            <div>
+                <h2>Пользователи</h2>
+                <p class="muted">Доступно только ADMIN</p>
+            </div>
+            <button id="reloadUsersButton" class="button secondary" type="button">Обновить</button>
+        </div>
+        <div id="usersContainer" class="table-wrap"></div>
+    </section>
+</main>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

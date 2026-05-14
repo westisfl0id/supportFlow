@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация | SupportFlow</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<main class="auth-layout">
+    <section class="auth-card">
+        <h1>Регистрация</h1>
+        <p class="muted">После регистрации будет создан обычный пользователь USER</p>
+
+        <form id="registerForm" class="form">
+            <label>
+                Имя
+                <input id="name" type="text" autocomplete="name" required>
+            </label>
+
+            <label>
+                Email
+                <input id="email" type="email" autocomplete="email" required>
+            </label>
+
+            <label>
+                Пароль
+                <input id="password" type="password" autocomplete="new-password" required>
+            </label>
+
+            <button class="button primary full" type="submit">Создать аккаунт</button>
+        </form>
+
+        <p class="form-footer">
+            Уже есть аккаунт? <a href="login.html">Войти</a>
+        </p>
+
+        <p id="message" class="message" aria-live="polite"></p>
+    </section>
+</main>
+
+<script type="module">
+    import { initRegisterPage } from './js/auth.js';
+    initRegisterPage();
+</script>
+</body>
+</html>
