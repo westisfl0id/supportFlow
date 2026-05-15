@@ -24,7 +24,7 @@ const elements = {};
 
 initDashboard();
 
-function initDashboard() {
+async function initDashboard() {
     state.currentUser = requireAuth();
 
     if (!state.currentUser) {
@@ -37,9 +37,10 @@ function initDashboard() {
     refreshTickets();
 
     if (state.currentUser.role === 'ADMIN') {
-        refreshUsers();
-        refreshAgents();
+        await refreshUsers();
+        await refreshAgents();
     }
+    await refreshTickets();
 }
 
 function cacheElements() {

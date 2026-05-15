@@ -1,5 +1,6 @@
 package com.supportflow.user.service;
 
+import com.supportflow.security.CurrentUserService;
 import com.supportflow.user.dto.CreateUserRequest;
 import com.supportflow.user.dto.UpdateUserRoleRequest;
 import com.supportflow.user.dto.UpdateUserStatusRequest;
@@ -7,8 +8,7 @@ import com.supportflow.user.dto.UserResponse;
 import com.supportflow.user.entity.UserEntity;
 import com.supportflow.user.enums.UserRole;
 import com.supportflow.user.enums.UserStatus;
-import com.supportflow.user.exception.UserAlreadyExistsException;
-import com.supportflow.user.exception.UserNotFoundException;
+import com.supportflow.user.exception.*;
 import com.supportflow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +21,7 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentUserService currentUserService;
 
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
@@ -43,7 +44,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
-        return userRepository.findAll()
+        return userRepository.findAllByOrderByStatusAscIdAsc()
                 .stream()
                 .map(this::map)
                 .toList();
@@ -57,16 +58,33 @@ public class UserService {
 
     @Transactional
     public UserResponse updateUserStatus(Long id, UpdateUserStatusRequest request) {
-        UserEntity user = findUserById(id);
-        user.setStatus(request.status());
-        return map(user);
+        UserEntity targetUser = findUserById(id);
+        UserEntity currentUser = currentUserService.getCurrentUser();
+
+        if (targetUser.getId().equals(currentUser.getId())
+                && request.status() == UserStatus.BLOCKED) {
+            throw new SelfBlockingNotAllowedException();
+        }
+
+        if (targetUser.getRole() == UserRole.ADMIN
+                && request.status() == UserStatus.BLOCKED) {
+            throw new AdminBlockingNotAllowedException();
+        }
+
+        targetUser.setStatus(request.status());
+        return map(targetUser);
     }
 
     @Transactional
     public UserResponse updateUserRole(Long id, UpdateUserRoleRequest request) {
-        UserEntity user = findUserById(id);
-        user.setRole(request.role());
-        return map(user);
+        UserEntity targetUser = findUserById(id);
+        UserEntity currentUser = currentUserService.getCurrentUser();
+
+        if (targetUser.getId().equals(currentUser.getId())) {
+            throw new SelfRoleChangeNotAllowedException();
+        }
+        targetUser.setRole(request.role());
+        return map(targetUser);
     }
 
     private UserEntity findUserById(Long id) {
