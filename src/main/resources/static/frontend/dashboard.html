@@ -19,6 +19,18 @@
 <main class="page">
     <section id="message" class="message hidden" aria-live="polite"></section>
 
+    <section id="statisticsSection" class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Статистика</h2>
+                <p id="statisticsSubtitle" class="muted"></p>
+            </div>
+            <button id="reloadStatisticsButton" class="button secondary" type="button">Обновить</button>
+        </div>
+
+        <div id="statisticsContainer" class="stats-grid"></div>
+    </section>
+
     <section id="createTicketSection" class="panel hidden">
         <div class="panel-header">
             <h2>Создать тикет</h2>

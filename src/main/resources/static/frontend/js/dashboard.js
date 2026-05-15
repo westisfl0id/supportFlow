@@ -12,6 +12,7 @@ import {
 } from './tickets.js';
 import { createComment, loadComments, renderComments } from './comments.js';
 import { loadAgents, loadUsers, updateUserRole, updateUserStatus } from './users.js';
+import { loadMyStatistics, loadOverviewStatistics } from './statistics.js';
 
 const state = {
     currentUser: null,
@@ -37,7 +38,8 @@ async function initDashboard() {
     cacheElements();
     bindEvents();
     configurePageForRole();
-    refreshTickets();
+    await refreshStatistics();
+    await refreshTickets();
 
     if (state.currentUser.role === 'ADMIN') {
         await refreshUsers();
@@ -72,6 +74,11 @@ function cacheElements() {
     elements.usersSection = document.getElementById('usersSection');
     elements.reloadUsersButton = document.getElementById('reloadUsersButton');
     elements.usersContainer = document.getElementById('usersContainer');
+
+    elements.statisticsSection = document.getElementById('statisticsSection');
+    elements.statisticsSubtitle = document.getElementById('statisticsSubtitle');
+    elements.statisticsContainer = document.getElementById('statisticsContainer');
+    elements.reloadStatisticsButton = document.getElementById('reloadStatisticsButton');
 
     elements.prevTicketsPageButton = document.getElementById('prevTicketsPageButton');
     elements.nextTicketsPageButton = document.getElementById('nextTicketsPageButton');
@@ -132,6 +139,7 @@ function bindEvents() {
     });
 
     elements.reloadUsersButton.addEventListener('click', refreshUsers);
+    elements.reloadStatisticsButton.addEventListener('click', refreshStatistics);
 }
 
 function configurePageForRole() {
@@ -289,6 +297,73 @@ function renderAssignControls(ticket) {
     }
 
     return '';
+}
+
+async function refreshStatistics() {
+    try {
+        elements.statisticsContainer.innerHTML = '<p class="muted">Загрузка статистики...</p>';
+
+        const statistics = state.currentUser.role === 'ADMIN'
+            ? await loadOverviewStatistics()
+            : await loadMyStatistics();
+
+        renderStatistics(statistics);
+    } catch (error) {
+        elements.statisticsContainer.innerHTML = '<p class="muted">Не удалось загрузить статистику.</p>';
+        showMessage(error.message, 'error');
+    }
+}
+
+function renderStatistics(statistics) {
+    elements.statisticsSubtitle.textContent = getStatisticsSubtitle(statistics.role);
+
+    elements.statisticsContainer.innerHTML = `
+        ${renderStatCard('Всего тикетов', statistics.totalTickets)}
+        ${renderStatCard('Открытые', statistics.openTickets)}
+        ${renderStatCard('Решённые', statistics.resolvedTickets)}
+        ${renderStatCard('Закрытые', statistics.closedTickets)}
+        ${renderStatCard('Просроченные SLA', statistics.slaBreachedTickets)}
+        ${renderStatCard('Среднее время первого ответа', formatMinutes(statistics.averageFirstResponseMinutes))}
+        ${renderStatCard('Среднее время решения', formatMinutes(statistics.averageResolutionMinutes))}
+    `;
+}
+
+function renderStatCard(label, value) {
+    return `
+        <div class="stat-card">
+            <span class="stat-label">${label}</span>
+            <strong class="stat-value">${value ?? '-'}</strong>
+        </div>
+    `;
+}
+
+function getStatisticsSubtitle(role) {
+    if (role === 'ADMIN') {
+        return 'Общая статистика по системе.';
+    }
+
+    if (role === 'AGENT') {
+        return 'Статистика по назначенным вам тикетам.';
+    }
+
+    return 'Статистика по вашим обращениям.';
+}
+
+function formatMinutes(value) {
+    if (value === null || value === undefined) {
+        return '-';
+    }
+
+    const rounded = Math.round(value);
+
+    if (rounded < 60) {
+        return `${rounded} мин`;
+    }
+
+    const hours = Math.floor(rounded / 60);
+    const minutes = rounded % 60;
+
+    return `${hours} ч ${minutes} мин`;
 }
 
 function bindTicketActionEvents() {
