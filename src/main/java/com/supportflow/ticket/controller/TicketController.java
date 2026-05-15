@@ -10,6 +10,10 @@ import com.supportflow.ticket.service.TicketService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,8 +43,11 @@ public class TicketController {
     }
 
     @GetMapping("/tickets")
-    public List<TicketResponse> getAllTickets() {
-        return ticketService.getAllTickets();
+    public Page<TicketResponse> getAllTickets(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        return ticketService.getAllTickets(pageable);
     }
 
     @GetMapping("/tickets/my")

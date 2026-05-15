@@ -88,6 +88,20 @@
         </form>
 
         <div id="ticketsContainer" class="cards-list"></div>
+
+        <div class="pagination-row">
+            <button id="prevTicketsPageButton" class="button secondary small" type="button">Назад</button>
+
+            <span id="ticketPageInfo">Страница 1 из 1</span>
+
+            <button id="nextTicketsPageButton" class="button secondary small" type="button">Вперёд</button>
+
+            <select id="ticketPageSize" class="inline-select">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+            </select>
+        </div>
     </section>
 
     <section id="usersSection" class="panel hidden">

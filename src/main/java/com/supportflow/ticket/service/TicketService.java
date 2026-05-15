@@ -1,5 +1,6 @@
     package com.supportflow.ticket.service;
 
+    import com.supportflow.exception.ForbiddenActionException;
     import com.supportflow.security.CurrentUserService;
     import com.supportflow.sla.service.SlaService;
     import com.supportflow.ticket.dto.AssignTicketRequest;
@@ -15,11 +16,14 @@
     import com.supportflow.ticket.specification.TicketSpecification;
     import com.supportflow.user.entity.UserEntity;
     import com.supportflow.user.enums.UserRole;
+    import com.supportflow.user.enums.UserStatus;
     import com.supportflow.user.exception.UserIsNotAgentException;
     import com.supportflow.user.exception.UserNotFoundException;
     import com.supportflow.user.repository.UserRepository;
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
+    import org.springframework.data.domain.Page;
+    import org.springframework.data.domain.Pageable;
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
@@ -63,11 +67,9 @@
         }
 
         @Transactional(readOnly = true)
-        public List<TicketResponse> getAllTickets() {
-            return ticketRepository.findAll()
-                    .stream()
-                    .map(this::map)
-                    .toList();
+        public Page<TicketResponse> getAllTickets(Pageable pageable) {
+            return ticketRepository.findAll(pageable)
+                    .map(this::map);
         }
 
         @Transactional(readOnly = true)
@@ -160,6 +162,10 @@
 
             if (agent.getRole() != UserRole.AGENT) {
                 throw new UserIsNotAgentException(request.agentId());
+            }
+
+            if (agent.getStatus() != UserStatus.ACTIVE) {
+                throw new ForbiddenActionException("Нельзя назначить заблокированного агента");
             }
 
             UserEntity currentUser = currentUserService.getCurrentUser();

@@ -17,7 +17,10 @@ const state = {
     currentUser: null,
     agents: [],
     filters: {},
-    showingSlaBreached: false
+    showingSlaBreached: false,
+    ticketPage: 0,
+    ticketSize: 10,
+    ticketTotalPages: 0
 };
 
 const elements = {};
@@ -69,6 +72,11 @@ function cacheElements() {
     elements.usersSection = document.getElementById('usersSection');
     elements.reloadUsersButton = document.getElementById('reloadUsersButton');
     elements.usersContainer = document.getElementById('usersContainer');
+
+    elements.prevTicketsPageButton = document.getElementById('prevTicketsPageButton');
+    elements.nextTicketsPageButton = document.getElementById('nextTicketsPageButton');
+    elements.ticketPageInfo = document.getElementById('ticketPageInfo');
+    elements.ticketPageSize = document.getElementById('ticketPageSize');
 }
 
 function bindEvents() {
@@ -87,6 +95,7 @@ function bindEvents() {
         event.preventDefault();
         state.showingSlaBreached = false;
         state.filters = readFilters();
+        state.ticketPage = 0;
         await refreshTickets();
     });
 
@@ -100,6 +109,26 @@ function bindEvents() {
     elements.createTicketForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         await handleCreateTicket();
+    });
+
+    elements.prevTicketsPageButton.addEventListener('click', async () => {
+        if (state.ticketPage > 0) {
+            state.ticketPage--;
+            await refreshTickets();
+        }
+    });
+
+    elements.nextTicketsPageButton.addEventListener('click', async () => {
+        if (state.ticketPage + 1 < state.ticketTotalPages) {
+            state.ticketPage++;
+            await refreshTickets();
+        }
+    });
+
+    elements.ticketPageSize.addEventListener('change', async () => {
+        state.ticketSize = Number(elements.ticketPageSize.value);
+        state.ticketPage = 0;
+        await refreshTickets();
     });
 
     elements.reloadUsersButton.addEventListener('click', refreshUsers);
@@ -147,9 +176,20 @@ async function refreshTickets() {
     try {
         elements.ticketsContainer.innerHTML = '<p class="muted">Загрузка...</p>';
 
-        const tickets = state.showingSlaBreached
+        const response = state.showingSlaBreached
             ? await loadSlaBreachedTickets()
-            : await loadTickets(state.currentUser, state.filters);
+            : await loadTickets(
+                state.currentUser,
+                state.filters,
+                state.ticketPage,
+                state.ticketSize);
+
+        const tickets = response.content || response;
+
+        if (response.content) {
+            state.ticketTotalPages = response.totalPages;
+            updateTicketPagination(response);
+        }
 
         renderTickets(tickets);
     } catch (error) {
@@ -166,6 +206,14 @@ function renderTickets(tickets) {
 
     elements.ticketsContainer.innerHTML = tickets.map(renderTicketCard).join('');
     bindTicketActionEvents();
+}
+
+function updateTicketPagination(page) {
+    elements.ticketPageInfo.textContent =
+        `Страница ${page.number + 1} из ${page.totalPages || 1}`;
+
+    elements.prevTicketsPageButton.disabled = page.first;
+    elements.nextTicketsPageButton.disabled = page.last;
 }
 
 function renderTicketCard(ticket) {

@@ -9,18 +9,18 @@ export const TICKET_STATUSES = [
     'CLOSED'
 ];
 
-export async function loadTickets(currentUser, filters = {}) {
-    if (currentUser.role === 'USER') {
-        return get('/tickets/my');
-    }
+export async function loadTickets(currentUser, filters = {}, page = 0, size = 10) {
+    const params = new URLSearchParams();
 
-    const hasFilters = Object.values(filters).some(value => value !== undefined && value !== null && value !== '');
+    params.append('page', page);
+    params.append('size', size);
 
-    if (hasFilters) {
-        return get('/tickets/search', filters);
-    }
+    if (filters.status) params.append('status', filters.status);
+    if (filters.priority) params.append('priority', filters.priority);
+    if (filters.createdById) params.append('createdById', filters.createdById);
+    if (filters.assignedToId) params.append('assignedToId', filters.assignedToId);
 
-    return get('/tickets');
+    return get(`/tickets?${params.toString()}`);
 }
 
 export async function loadSlaBreachedTickets() {
