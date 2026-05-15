@@ -10,6 +10,11 @@ import {
     TICKET_STATUSES,
     updateTicketStatus
 } from './tickets.js';
+import {
+    downloadAttachment,
+    loadTicketAttachments,
+    uploadTicketAttachment
+} from './attachments.js';
 import { createComment, loadComments, renderComments } from './comments.js';
 import { loadAgents, loadUsers, updateUserRole, updateUserStatus } from './users.js';
 import { loadMyStatistics, loadOverviewStatistics } from './statistics.js';
@@ -58,6 +63,7 @@ function cacheElements() {
     elements.ticketTitle = document.getElementById('ticketTitle');
     elements.ticketDescription = document.getElementById('ticketDescription');
     elements.ticketPriority = document.getElementById('ticketPriority');
+    elements.ticketAttachment = document.getElementById('ticketAttachment');
 
     elements.ticketsTitle = document.getElementById('ticketsTitle');
     elements.ticketsSubtitle = document.getElementById('ticketsSubtitle');
@@ -165,15 +171,24 @@ function configurePageForRole() {
 
 async function handleCreateTicket() {
     try {
-        await createTicket(
+        const ticket  = await createTicket(
             elements.ticketTitle.value.trim(),
             elements.ticketDescription.value.trim(),
             elements.ticketPriority.value
         );
 
+        const file = elements.ticketAttachment.files[0];
+
+        if (file) {
+            await uploadTicketAttachment(ticket.id, file);
+        }
+
         elements.createTicketForm.reset();
         elements.ticketPriority.value = 'MEDIUM';
-        showMessage('Тикет создан.', 'success');
+
+        showMessage(file ? 'Тикет создан, вложение загружено.' : 'Тикет создан.', 'success');
+
+        await refreshStatistics();
         await refreshTickets();
     } catch (error) {
         showMessage(error.message, 'error');
@@ -268,9 +283,11 @@ function renderTicketCard(ticket) {
                 ${canAssign ? renderAssignControls(ticket) : ''}
 
                 <button class="button secondary small comments-button" data-ticket-id="${ticket.id}" type="button">Комментарии</button>
+                <button class="button secondary small attachments-button" data-ticket-id="${ticket.id}" type="button">Вложения</button>
             </div>
 
             <div id="comments-${ticket.id}" class="comments-box hidden"></div>
+            <div id="attachments-${ticket.id}" class="comments-box hidden"></div>
         </article>
     `;
 }
@@ -410,6 +427,12 @@ function bindTicketActionEvents() {
             await toggleComments(button.dataset.ticketId);
         });
     });
+
+    document.querySelectorAll('.attachments-button').forEach(button => {
+        button.addEventListener('click', async () => {
+            await toggleAttachments(button.dataset.ticketId);
+        });
+    });
 }
 
 async function handleTicketAction(action) {
@@ -468,6 +491,120 @@ async function toggleComments(ticketId) {
         box.classList.add('hidden');
         showMessage(error.message, 'error');
     }
+}
+
+async function toggleAttachments(ticketId) {
+    const box = document.getElementById(`attachments-${ticketId}`);
+
+    if (!box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+    }
+
+    try {
+        box.classList.remove('hidden');
+        box.innerHTML = '<p class="muted">Загрузка вложений...</p>';
+
+        const attachments = await loadTicketAttachments(ticketId);
+
+        box.innerHTML = `
+            <div class="attachment-list">
+                ${renderAttachments(attachments)}
+            </div>
+
+            <form class="attachment-form" data-ticket-id="${ticketId}">
+                <input type="file" required>
+                <button class="button primary small" type="submit">Загрузить файл</button>
+            </form>
+        `;
+
+        bindAttachmentEvents(box, ticketId);
+    } catch (error) {
+        box.innerHTML = '';
+        box.classList.add('hidden');
+        showMessage(error.message, 'error');
+    }
+}
+
+function renderAttachments(attachments) {
+    if (!attachments.length) {
+        return '<p class="muted">Вложений нет.</p>';
+    }
+
+    return attachments.map(attachment => `
+        <div class="attachment-item">
+            <span>
+                ${escapeHtml(attachment.originalFilename)}
+                <span class="muted">(${formatFileSize(attachment.sizeBytes)})</span>
+            </span>
+
+            <button
+                class="button secondary small download-attachment-button"
+                type="button"
+                data-attachment-id="${attachment.id}"
+                data-filename="${escapeHtml(attachment.originalFilename)}"
+            >
+                Скачать
+            </button>
+        </div>
+    `).join('');
+}
+
+function bindAttachmentEvents(box, ticketId) {
+    box.querySelectorAll('.download-attachment-button').forEach(button => {
+        button.addEventListener('click', async () => {
+            try {
+                await downloadAttachment(
+                    button.dataset.attachmentId,
+                    button.dataset.filename
+                );
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        });
+    });
+
+    const form = box.querySelector('.attachment-form');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const input = form.querySelector('input[type="file"]');
+        const file = input.files[0];
+
+        if (!file) {
+            showMessage('Выбери файл.', 'error');
+            return;
+        }
+
+        try {
+            await uploadTicketAttachment(ticketId, file);
+            showMessage('Файл загружен.', 'success');
+
+            box.classList.add('hidden');
+            box.innerHTML = '';
+            await toggleAttachments(ticketId);
+        } catch (error) {
+            showMessage(error.message, 'error');
+        }
+    });
+}
+
+function formatFileSize(sizeBytes) {
+    if (!sizeBytes && sizeBytes !== 0) {
+        return '-';
+    }
+
+    if (sizeBytes < 1024) {
+        return `${sizeBytes} Б`;
+    }
+
+    if (sizeBytes < 1024 * 1024) {
+        return `${Math.round(sizeBytes / 1024)} КБ`;
+    }
+
+    return `${(sizeBytes / 1024 / 1024).toFixed(1)} МБ`;
 }
 
 async function refreshUsers() {

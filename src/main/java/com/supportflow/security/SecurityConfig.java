@@ -51,6 +51,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/tickets/*/comments").hasAnyRole("USER", "AGENT", "ADMIN")
 
+                        .requestMatchers(HttpMethod.POST, "/tickets/*/attachments").hasAnyRole("USER", "AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/tickets/*/attachments").hasAnyRole("USER", "AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/attachments/*/download").hasAnyRole("USER", "AGENT", "ADMIN")
+
                         .requestMatchers(HttpMethod.GET, "/tickets/*").hasAnyRole("USER", "AGENT", "ADMIN")
 
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/assign").hasAnyRole("AGENT", "ADMIN")

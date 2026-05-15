@@ -4,6 +4,9 @@ import com.supportflow.auth.exception.EmailAlreadyExistsException;
 import com.supportflow.auth.exception.InvalidCredentialsException;
 import com.supportflow.auth.exception.UserBlockedException;
 import com.supportflow.comment.exception.CommentNotFoundException;
+import com.supportflow.ticket.attachment.exception.AttachmentNotFoundException;
+import com.supportflow.ticket.attachment.exception.FileStorageException;
+import com.supportflow.ticket.attachment.exception.InvalidAttachmentException;
 import com.supportflow.ticket.exception.InvalidTicketStatusTransitionException;
 import com.supportflow.ticket.exception.TicketAlreadyClosedException;
 import com.supportflow.ticket.exception.TicketNotFoundException;
@@ -112,6 +115,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidRequestBody(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("INVALID_REQUEST_BODY", "Invalid request body"));
+    }
+
+    @ExceptionHandler(AttachmentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAttachmentNotFound(AttachmentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("ATTACHMENT_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidAttachmentException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidAttachment(InvalidAttachmentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_ATTACHMENT", ex.getMessage()));
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorage(FileStorageException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse("FILE_STORAGE_ERROR", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -15,6 +15,10 @@ export async function loadTickets(currentUser, filters = {}, page = 0, size = 10
     params.append('page', page);
     params.append('size', size);
 
+    if (currentUser.role === 'USER') {
+        return get(`/tickets/my?${params.toString()}`);
+    }
+
     if (filters.status) params.append('status', filters.status);
     if (filters.priority) params.append('priority', filters.priority);
     if (filters.createdById) params.append('createdById', filters.createdById);
