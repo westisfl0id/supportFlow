@@ -63,6 +63,7 @@ function cacheElements() {
     elements.ticketTitle = document.getElementById('ticketTitle');
     elements.ticketDescription = document.getElementById('ticketDescription');
     elements.ticketPriority = document.getElementById('ticketPriority');
+    elements.ticketCategory = document.getElementById('ticketCategory');
     elements.ticketAttachment = document.getElementById('ticketAttachment');
 
     elements.ticketsTitle = document.getElementById('ticketsTitle');
@@ -72,6 +73,7 @@ function cacheElements() {
     elements.ticketFilters = document.getElementById('ticketFilters');
     elements.filterStatus = document.getElementById('filterStatus');
     elements.filterPriority = document.getElementById('filterPriority');
+    elements.filterCategory = document.getElementById('filterCategory');
     elements.filterCreatedById = document.getElementById('filterCreatedById');
     elements.filterAssignedToId = document.getElementById('filterAssignedToId');
     elements.clearFiltersButton = document.getElementById('clearFiltersButton');
@@ -174,7 +176,8 @@ async function handleCreateTicket() {
         const ticket  = await createTicket(
             elements.ticketTitle.value.trim(),
             elements.ticketDescription.value.trim(),
-            elements.ticketPriority.value
+            elements.ticketPriority.value,
+            elements.ticketCategory.value
         );
 
         const files = elements.ticketAttachment.files;
@@ -185,6 +188,7 @@ async function handleCreateTicket() {
 
         elements.createTicketForm.reset();
         elements.ticketPriority.value = 'MEDIUM';
+        elements.ticketCategory.value = 'OTHER';
 
         showMessage(
             files.length > 0 ?  'Тикет создан, вложения загружены.' : 'Тикет создан.', 'success');
@@ -257,6 +261,7 @@ function renderTicketCard(ticket) {
                 <div class="actions-row">
                     <span class="badge">${ticket.status}</span>
                     <span class="badge">${ticket.priority}</span>
+                    <span class="badge">${formatCategory(ticket.category)}</span>
                     ${ticket.slaBreached ? '<span class="badge danger">SLA</span>' : ''}
                 </div>
             </div>
@@ -736,6 +741,7 @@ function readFilters() {
     return {
         status: elements.filterStatus.value,
         priority: elements.filterPriority.value,
+        category: elements.filterCategory.value,
         createdById: elements.filterCreatedById.value,
         assignedToId: elements.filterAssignedToId.value
     };
@@ -744,6 +750,7 @@ function readFilters() {
 function clearFilters() {
     elements.filterStatus.value = '';
     elements.filterPriority.value = '';
+    elements.filterCategory.value = '';
     elements.filterCreatedById.value = '';
     elements.filterAssignedToId.value = '';
 }
@@ -755,6 +762,19 @@ function showMessage(text, type = 'error') {
     window.setTimeout(() => {
         elements.message.classList.add('hidden');
     }, 5000);
+}
+
+function formatCategory(category) {
+    const categories = {
+        SOFTWARE: 'ПО',
+        HARDWARE: 'Оборудование',
+        NETWORK: 'Сеть',
+        ACCESS: 'Доступ',
+        ACCOUNT: 'Аккаунт',
+        OTHER: 'Другое'
+    };
+
+    return categories[category] || category || '-';
 }
 
 function formatDate(value) {

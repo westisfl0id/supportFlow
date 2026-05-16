@@ -21,6 +21,7 @@ export async function loadTickets(currentUser, filters = {}, page = 0, size = 10
 
     if (filters.status) params.append('status', filters.status);
     if (filters.priority) params.append('priority', filters.priority);
+    if (filters.category) params.append('category', filters.category);
     if (filters.createdById) params.append('createdById', filters.createdById);
     if (filters.assignedToId) params.append('assignedToId', filters.assignedToId);
 
@@ -31,11 +32,12 @@ export async function loadSlaBreachedTickets() {
     return get('/tickets/sla/breached');
 }
 
-export async function createTicket(title, description, priority) {
+export async function createTicket(title, description, priority, category) {
     return post('/tickets', {
         title,
         description,
-        priority
+        priority,
+        category
     });
 }
 

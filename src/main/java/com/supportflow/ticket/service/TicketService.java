@@ -8,6 +8,7 @@
     import com.supportflow.ticket.dto.TicketResponse;
     import com.supportflow.ticket.dto.UpdateTicketStatusRequest;
     import com.supportflow.ticket.entity.TicketEntity;
+    import com.supportflow.ticket.enums.TicketCategory;
     import com.supportflow.ticket.enums.TicketPriority;
     import com.supportflow.ticket.enums.TicketStatus;
     import com.supportflow.ticket.exception.TicketAlreadyClosedException;
@@ -67,8 +68,20 @@
         }
 
         @Transactional(readOnly = true)
-        public Page<TicketResponse> getAllTickets(Pageable pageable) {
-            return ticketRepository.findAll(pageable)
+        public Page<TicketResponse> getAllTickets(
+                TicketStatus status,
+                TicketPriority priority,
+                TicketCategory category,
+                Long createdById,
+                Long assignedToId,
+                Pageable pageable) {
+            Specification<TicketEntity> specification = Specification
+                    .where(TicketSpecification.hasStatus(status))
+                    .and(TicketSpecification.hasPriority(priority))
+                    .and(TicketSpecification.hasCategory(category))
+                    .and(TicketSpecification.hasCreatedById(createdById))
+                    .and(TicketSpecification.hasAssignedToId(assignedToId));
+            return ticketRepository.findAll(specification, pageable)
                     .map(this::map);
         }
 
@@ -247,6 +260,7 @@
                     .title(request.title())
                     .description(request.description())
                     .priority(request.priority())
+                    .category(request.category())
                     .createdBy(user)
                     .status(TicketStatus.NEW)
                     .createdAt(now)
@@ -269,6 +283,7 @@
                     ticket.getDescription(),
                     ticket.getStatus(),
                     ticket.getPriority(),
+                    ticket.getCategory(),
                     ticket.getCreatedBy().getId(),
                     ticket.getCreatedBy().getName(),
                     assignedTo != null ? assignedTo.getId() : null,

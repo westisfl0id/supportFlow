@@ -52,6 +52,18 @@
                 </select>
             </label>
 
+            <label>
+                Категория
+                <select id="ticketCategory" required>
+                    <option value="SOFTWARE">ПО</option>
+                    <option value="HARDWARE">Оборудование</option>
+                    <option value="NETWORK">Сеть</option>
+                    <option value="ACCESS">Доступ</option>
+                    <option value="ACCOUNT">Аккаунт</option>
+                    <option value="OTHER" selected>Другое</option>
+                </select>
+            </label>
+
             <label class="span-2">
                 Описание
                 <textarea id="ticketDescription" rows="4" required></textarea>
@@ -96,6 +108,17 @@
                 <option value="MEDIUM">MEDIUM</option>
                 <option value="HIGH">HIGH</option>
                 <option value="CRITICAL">CRITICAL</option>
+            </select>
+
+
+            <select id="filterCategory">
+                <option value="">Все категории</option>
+                <option value="SOFTWARE">ПО</option>
+                <option value="HARDWARE">Оборудование</option>
+                <option value="NETWORK">Сеть</option>
+                <option value="ACCESS">Доступ</option>
+                <option value="ACCOUNT">Аккаунт</option>
+                <option value="OTHER">Другое</option>
             </select>
 
             <input id="filterCreatedById" type="number" min="1" placeholder="createdById">

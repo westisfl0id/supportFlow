@@ -1,9 +1,11 @@
 package com.supportflow.ticket.entity;
 
 import com.supportflow.comment.entity.CommentEntity;
+import com.supportflow.ticket.enums.TicketCategory;
 import com.supportflow.ticket.enums.TicketPriority;
 import com.supportflow.ticket.enums.TicketStatus;
 import com.supportflow.user.entity.UserEntity;
+
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -34,6 +36,11 @@ public class TicketEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketPriority priority;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TicketCategory category = TicketCategory.OTHER;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
@@ -77,6 +84,9 @@ public class TicketEntity {
 
         if (this.status == null) {
             this.status = TicketStatus.NEW;
+        }
+        if (this.category == null) {
+            this.category = TicketCategory.OTHER;
         }
     }
 

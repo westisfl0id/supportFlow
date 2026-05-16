@@ -4,6 +4,7 @@ import com.supportflow.ticket.dto.AssignTicketRequest;
 import com.supportflow.ticket.dto.CreateTicketRequest;
 import com.supportflow.ticket.dto.TicketResponse;
 import com.supportflow.ticket.dto.UpdateTicketStatusRequest;
+import com.supportflow.ticket.enums.TicketCategory;
 import com.supportflow.ticket.enums.TicketPriority;
 import com.supportflow.ticket.enums.TicketStatus;
 import com.supportflow.ticket.service.TicketService;
@@ -44,10 +45,15 @@ public class TicketController {
 
     @GetMapping("/tickets")
     public Page<TicketResponse> getAllTickets(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) TicketPriority priority,
+            @RequestParam(required = false) TicketCategory category,
+            @RequestParam(required = false) Long createdById,
+            @RequestParam(required = false) Long assignedToId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
-        return ticketService.getAllTickets(pageable);
+        return ticketService.getAllTickets(status, priority, category, createdById, assignedToId, pageable);
     }
 
     @GetMapping("/tickets/my")
