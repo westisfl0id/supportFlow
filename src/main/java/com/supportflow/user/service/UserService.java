@@ -11,11 +11,13 @@ import com.supportflow.user.enums.UserStatus;
 import com.supportflow.user.exception.*;
 import com.supportflow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -71,7 +73,18 @@ public class UserService {
             throw new AdminBlockingNotAllowedException();
         }
 
+        UserStatus oldStatus = targetUser.getStatus();
+
         targetUser.setStatus(request.status());
+
+        log.info(
+                "User status changed: targetUserId={}, oldStatus={}, newStatus={}, changedById={}",
+                targetUser.getId(),
+                oldStatus,
+                request.status(),
+                currentUser.getId()
+        );
+
         return map(targetUser);
     }
 
@@ -83,7 +96,19 @@ public class UserService {
         if (targetUser.getId().equals(currentUser.getId())) {
             throw new SelfRoleChangeNotAllowedException();
         }
+
+        UserRole oldRole = targetUser.getRole();
+
         targetUser.setRole(request.role());
+
+        log.info(
+                "User role changed: targetUserId={}, oldRole={}, newRole={}, changedById={}",
+                targetUser.getId(),
+                oldRole,
+                request.role(),
+                currentUser.getId()
+        );
+
         return map(targetUser);
     }
 

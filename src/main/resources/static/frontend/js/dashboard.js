@@ -13,7 +13,7 @@ import {
 import {
     downloadAttachment,
     loadTicketAttachments,
-    uploadTicketAttachment
+    uploadTicketAttachments
 } from './attachments.js';
 import { createComment, loadComments, renderComments } from './comments.js';
 import { loadAgents, loadUsers, updateUserRole, updateUserStatus } from './users.js';
@@ -177,16 +177,17 @@ async function handleCreateTicket() {
             elements.ticketPriority.value
         );
 
-        const file = elements.ticketAttachment.files[0];
+        const files = elements.ticketAttachment.files;
 
-        if (file) {
-            await uploadTicketAttachment(ticket.id, file);
+        if (files.length > 0) {
+            await uploadTicketAttachments(ticket.id, files);
         }
 
         elements.createTicketForm.reset();
         elements.ticketPriority.value = 'MEDIUM';
 
-        showMessage(file ? 'Тикет создан, вложение загружено.' : 'Тикет создан.', 'success');
+        showMessage(
+            files.length > 0 ?  'Тикет создан, вложения загружены.' : 'Тикет создан.', 'success');
 
         await refreshStatistics();
         await refreshTickets();
@@ -514,7 +515,7 @@ async function toggleAttachments(ticketId) {
             </div>
 
             <form class="attachment-form" data-ticket-id="${ticketId}">
-                <input type="file" required>
+                <input type="file" multiple required>
                 <button class="button primary small" type="submit">Загрузить файл</button>
             </form>
         `;
@@ -571,16 +572,16 @@ function bindAttachmentEvents(box, ticketId) {
         event.preventDefault();
 
         const input = form.querySelector('input[type="file"]');
-        const file = input.files[0];
+        const files = input.files;
 
-        if (!file) {
+        if (!files.length) {
             showMessage('Выбери файл.', 'error');
             return;
         }
 
         try {
-            await uploadTicketAttachment(ticketId, file);
-            showMessage('Файл загружен.', 'success');
+            await uploadTicketAttachments(ticketId, files);
+            showMessage('Файлы загружены.', 'success');
 
             box.classList.add('hidden');
             box.innerHTML = '';

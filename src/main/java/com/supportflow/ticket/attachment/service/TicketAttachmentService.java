@@ -13,6 +13,8 @@ import com.supportflow.ticket.exception.TicketNotFoundException;
 import com.supportflow.ticket.repository.TicketRepository;
 import com.supportflow.ticket.service.TicketAccessService;
 import com.supportflow.user.entity.UserEntity;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -32,6 +36,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TicketAttachmentService {
     private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            "png", "jpg", "jpeg", "pdf", "txt", "log"
+    );
+
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/png",
+            "image/jpeg",
+            "application/pdf",
+            "text/plain"
+    );
 
     private final TicketAttachmentRepository attachmentRepository;
     private final TicketRepository ticketRepository;
@@ -58,6 +73,8 @@ public class TicketAttachmentService {
         ticketAccessService.checkCanViewTicket(currentUser, ticket);
 
         String originalFilename = cleanFilename(file.getOriginalFilename());
+        validateFileType(file, originalFilename);
+
         String storedFilename = UUID.randomUUID() + "_" + originalFilename;
 
         try {
@@ -98,6 +115,47 @@ public class TicketAttachmentService {
         }
     }
 
+    private void validateFileType(@NotNull MultipartFile file, @NotBlank String filename) {
+        String extension = getFileExtension(filename);
+        String contentType = file.getContentType();
+
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            log.warn(
+                    "Attachment rejected: invalid extension={}, filename={}, contentType={}",
+                    extension,
+                    filename,
+                    contentType
+            );
+
+            throw new InvalidAttachmentException(
+                    "Недопустимый тип файла. Разрешены: png, jpg, jpeg, pdf, txt, log"
+            );
+        }
+
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            log.warn(
+                    "Attachment rejected: invalid contentType={}, filename={}, extension={}",
+                    contentType,
+                    filename,
+                    extension
+            );
+
+            throw new InvalidAttachmentException(
+                    "Недопустимый MIME-тип файла"
+            );
+        }
+    }
+
+    private String getFileExtension(String filename) {
+        int dotIndex = filename.lastIndexOf('.');
+
+        if (dotIndex == -1 || dotIndex == filename.length() - 1) {
+            throw new InvalidAttachmentException("Файл должен иметь расширение");
+        }
+
+        return filename.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
+    }
+
     @Transactional(readOnly = true)
     public List<TicketAttachmentResponse> getTicketAttachments(Long ticketId) {
         TicketEntity ticket = ticketRepository.findById(ticketId)
@@ -128,12 +186,20 @@ public class TicketAttachmentService {
                 throw new FileStorageException("Файл недоступен");
             }
 
+            log.info(
+                    "Ticket attachment downloaded: attachmentId={}, ticketId={}, downloadedById={}",
+                    attachment.getId(),
+                    attachment.getTicket().getId(),
+                    currentUser.getId()
+            );
+
             return new TicketAttachmentFile(
                     resource,
                     attachment.getContentType(),
                     attachment.getOriginalFilename()
             );
         } catch (MalformedURLException ex) {
+            log.error("Failed to download ticket attachment: attachmentId={}, storagePath={}", attachmentId, attachment.getStoragePath(), ex);
             throw new FileStorageException("Не удалось загрузить файл");
         }
     }

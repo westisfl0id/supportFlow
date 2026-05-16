@@ -5,9 +5,11 @@ export async function loadTicketAttachments(ticketId) {
     return get(`/tickets/${ticketId}/attachments`);
 }
 
-export async function uploadTicketAttachment(ticketId, file) {
+export async function uploadTicketAttachments(ticketId, files) {
     const formData = new FormData();
-    formData.append('file', file);
+    Array.from(files).forEach(file => {
+        formData.append('files', file);
+    });
 
     const headers = new Headers();
     const token = getToken();
