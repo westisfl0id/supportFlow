@@ -1,6 +1,7 @@
 package com.supportflow.ticket.repository;
 
 import com.supportflow.ticket.entity.TicketEntity;
+import com.supportflow.ticket.enums.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.List;
@@ -11,4 +12,6 @@ public interface TicketRepository extends JpaRepository<TicketEntity, Long>, Jpa
     List<TicketEntity> findByAssignedToId(Long agentId);
 
     List<TicketEntity> findBySlaBreachedTrue();
+
+    List<TicketEntity> findBySlaBreachedFalseAndStatusNot(TicketStatus status);
 }

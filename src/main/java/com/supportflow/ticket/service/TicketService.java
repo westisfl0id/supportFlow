@@ -244,8 +244,10 @@
 
             if (ticket.getFirstRespondedAt() == null
                     && (currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN)) {
-                ticket.setStatus(TicketStatus.RESOLVED);
+                ticket.setFirstRespondedAt(LocalDateTime.now());
             }
+
+            ticket.setStatus(TicketStatus.RESOLVED);
 
             log.info("Ticket resolved: ticketId={}, resolvedById={}", ticket.getId(), currentUser.getId());
 

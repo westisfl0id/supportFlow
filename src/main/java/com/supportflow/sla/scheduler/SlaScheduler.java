@@ -2,6 +2,7 @@ package com.supportflow.sla.scheduler;
 
 import com.supportflow.sla.service.SlaService;
 import com.supportflow.ticket.entity.TicketEntity;
+import com.supportflow.ticket.enums.TicketStatus;
 import com.supportflow.ticket.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ public class SlaScheduler {
     public void checkSlaBreaches() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<TicketEntity> tickets = ticketRepository.findAll();
+        List<TicketEntity> tickets = ticketRepository.findBySlaBreachedFalseAndStatusNot(TicketStatus.CLOSED);
 
         for (TicketEntity ticket : tickets) {
             if (!Boolean.TRUE.equals(ticket.getSlaBreached()) && slaService.isSlaBreached(ticket, now)) {
