@@ -1,0 +1,15 @@
+package com.supportflow.audit.enums;
+
+public enum AuditAction {
+    TICKET_CREATED,
+    STATUS_CHANGED,
+    TICKET_ASSIGNED,
+    COMMENT_ADDED,
+    ATTACHMENT_UPLOADED,
+    TICKET_RESOLVED,
+    TICKET_REOPENED,
+    TICKET_CLOSED,
+    SLA_BREACHED,
+    USER_BLOCKED,
+    USER_ROLE_CHANGED
+}

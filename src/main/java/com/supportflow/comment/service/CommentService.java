@@ -1,5 +1,6 @@
 package com.supportflow.comment.service;
 
+import com.supportflow.audit.service.AuditLogService;
 import com.supportflow.comment.dto.CommentResponse;
 import com.supportflow.comment.dto.CreateCommentRequest;
 import com.supportflow.comment.entity.CommentEntity;
@@ -28,6 +29,7 @@ public class CommentService {
     private final TicketRepository ticketRepository;
     private final CurrentUserService currentUserService;
     private final TicketAccessService ticketAccessService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public CommentResponse createComment(Long ticketId, CreateCommentRequest request) {
@@ -54,6 +56,8 @@ public class CommentService {
                 .build();
 
         commentRepository.save(comment);
+
+        auditLogService.logCommentAdded(ticket, currentUser);
 
         log.info("Comment created: commentId={}, ticketId={}, createdById={}", comment.getId(), ticket.getId(), currentUser.getId());
 

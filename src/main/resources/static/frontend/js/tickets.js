@@ -76,3 +76,7 @@ export async function closeTicket(ticketId) {
 export async function reopenTicket(ticketId) {
     return patch(`/tickets/${ticketId}/reopen`);
 }
+
+export async function loadTicketTimeline(ticketId) {
+    return get(`/tickets/${ticketId}/timeline`);
+}

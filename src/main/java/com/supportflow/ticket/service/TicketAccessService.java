@@ -66,6 +66,14 @@ public class TicketAccessService {
     }
 
     public void checkCanReopenTicket(UserEntity user, TicketEntity ticket) {
+        if (ticket.getStatus() == TicketStatus.CLOSED) {
+            if (user.getRole() == UserRole.ADMIN) {
+                return;
+            }
+
+            throw new ForbiddenActionException("Only admin can reopen closed ticket");
+        }
+
         if (user.getRole() == UserRole.ADMIN) {
             return;
         }

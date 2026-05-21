@@ -15,7 +15,7 @@ public class TicketStatusTransitionService {
             TicketStatus.IN_PROGRESS, Set.of(TicketStatus.WAITING, TicketStatus.RESOLVED),
             TicketStatus.WAITING, Set.of(TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED),
             TicketStatus.RESOLVED, Set.of(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED),
-            TicketStatus.CLOSED, Set.of()
+            TicketStatus.CLOSED, Set.of(TicketStatus.IN_PROGRESS)
     );
 
     public void validateTransition(TicketStatus currentStatus, TicketStatus targetStatus) {

@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/status").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/resolve").hasAnyRole("AGENT", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/tickets/*/close").hasAnyRole("AGENT", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/tickets/*/reopen").hasAnyRole("USER", "AGENT", "ADMIN")
 
                         .anyRequest().authenticated()
                 )

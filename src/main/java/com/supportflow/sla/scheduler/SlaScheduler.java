@@ -1,5 +1,6 @@
 package com.supportflow.sla.scheduler;
 
+import com.supportflow.audit.service.AuditLogService;
 import com.supportflow.sla.service.SlaService;
 import com.supportflow.ticket.entity.TicketEntity;
 import com.supportflow.ticket.enums.TicketStatus;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -18,6 +20,7 @@ import java.util.List;
 public class SlaScheduler {
     private final TicketRepository ticketRepository;
     private final SlaService slaService;
+    private final AuditLogService auditLogService;
 
     @Scheduled(fixedRate = 60000)
     @Transactional
@@ -30,13 +33,41 @@ public class SlaScheduler {
             if (!Boolean.TRUE.equals(ticket.getSlaBreached()) && slaService.isSlaBreached(ticket, now)) {
                 ticket.setSlaBreached(true);
 
+                String reason = buildSlaBreachReason(ticket, now);
+
+                auditLogService.logSlaBreached(ticket, reason);
+
                 log.warn(
-                        "SLA breached: ticketId={}, status={}, priority={}",
+                        "SLA breached: ticketId={}, status={}, priority={}, reason={}",
                         ticket.getId(),
                         ticket.getStatus(),
-                        ticket.getPriority()
+                        ticket.getPriority(),
+                        reason
                 );
             }
         }
+    }
+
+    private String buildSlaBreachReason(TicketEntity ticket, LocalDateTime now) {
+        List<String> reasons = new ArrayList<>();
+
+        if (ticket.getFirstRespondedAt() == null
+                && ticket.getFirstResponseDeadline() != null
+                && now.isAfter(ticket.getFirstResponseDeadline())) {
+            reasons.add("первому ответу");
+        }
+
+        if (ticket.getResolvedAt() == null
+                && ticket.getResolutionDeadline() != null
+                && now.isAfter(ticket.getResolutionDeadline())
+                && ticket.getStatus() != TicketStatus.CLOSED) {
+            reasons.add("сроку решения обращения");
+        }
+
+        if (reasons.isEmpty()) {
+            return "Нарушен SLA";
+        }
+
+        return "Нарушен SLA по " + String.join(" и ", reasons);
     }
 }

@@ -6,9 +6,9 @@ import {
     createTicket,
     getAvailableStatuses,
     loadSlaBreachedTickets,
+    loadTicketTimeline,
     loadTickets,
     reopenTicket,
-    resolveTicket,
     updateTicketStatus
 } from './tickets.js';
 import {
@@ -45,7 +45,6 @@ async function initDashboard() {
     bindEvents();
     configurePageForRole();
     await refreshStatistics();
-    await refreshTickets();
 
     if (state.currentUser.role === 'ADMIN') {
         await refreshUsers();
@@ -285,8 +284,6 @@ function renderTicketCard(ticket) {
                     <select class="inline-select status-select" data-ticket-id="${ticket.id}">
                         ${statusOptions}
                     </select>
-                    <button class="button secondary small resolve-button" data-ticket-id="${ticket.id}" type="button">Resolve</button>
-                    <button class="button secondary small close-button" data-ticket-id="${ticket.id}" type="button">Close</button>
                 ` : ''}
                 
                 ${canClose ? `
@@ -301,10 +298,12 @@ function renderTicketCard(ticket) {
 
                 <button class="button secondary small comments-button" data-ticket-id="${ticket.id}" type="button">Комментарии</button>
                 <button class="button secondary small attachments-button" data-ticket-id="${ticket.id}" type="button">Вложения</button>
+                <button class="button secondary small timeline-button" data-ticket-id="${ticket.id}" type="button">История</button>
             </div>
 
             <div id="comments-${ticket.id}" class="comments-box hidden"></div>
             <div id="attachments-${ticket.id}" class="comments-box hidden"></div>
+            <div id="timeline-${ticket.id}" class="comments-box hidden"></div>
         </article>
     `;
 }
@@ -407,12 +406,6 @@ function bindTicketActionEvents() {
         });
     });
 
-    document.querySelectorAll('.resolve-button').forEach(button => {
-        button.addEventListener('click', async () => {
-            await handleTicketAction(() => resolveTicket(button.dataset.ticketId));
-        });
-    });
-
     document.querySelectorAll('.close-button').forEach(button => {
         button.addEventListener('click', async () => {
             await handleTicketAction(() => closeTicket(button.dataset.ticketId));
@@ -454,6 +447,12 @@ function bindTicketActionEvents() {
     document.querySelectorAll('.attachments-button').forEach(button => {
         button.addEventListener('click', async () => {
             await toggleAttachments(button.dataset.ticketId);
+        });
+    });
+
+    document.querySelectorAll('.timeline-button').forEach(button => {
+        button.addEventListener('click', async () => {
+            await toggleTimeline(button.dataset.ticketId);
         });
     });
 }
@@ -572,6 +571,84 @@ function renderAttachments(attachments) {
             </button>
         </div>
     `).join('');
+}
+
+async function toggleTimeline(ticketId) {
+    const box = document.getElementById(`timeline-${ticketId}`);
+
+    if (!box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+    }
+
+    try {
+        box.classList.remove('hidden');
+        box.innerHTML = '<p class="muted">Загрузка истории...</p>';
+
+        const timeline = await loadTicketTimeline(ticketId);
+
+        box.innerHTML = `
+            <h4 class="timeline-title">История обращения</h4>
+            ${renderTimeline(timeline)}
+        `;
+    } catch (error) {
+        box.innerHTML = '';
+        box.classList.add('hidden');
+        showMessage(error.message, 'error');
+    }
+}
+
+function renderTimeline(timeline) {
+    if (!timeline.length) {
+        return '<p class="muted">История пока пустая.</p>';
+    }
+
+    return `
+        <div class="timeline-list">
+            ${timeline.map(event => `
+                <article class="timeline-item">
+                    <div class="timeline-marker"></div>
+
+                    <div class="timeline-content">
+                        <div class="timeline-meta">
+                            <strong>${formatAuditAction(event.action)}</strong>
+                            <span>${formatDate(event.createdAt)}</span>
+                        </div>
+
+                        <div class="timeline-message">
+                            ${escapeHtml(event.message)}
+                        </div>
+
+                        <div class="timeline-details">
+                            <span>Автор: ${escapeHtml(event.actorName || 'SYSTEM')}</span>
+                            ${event.actorRole ? `<span>Роль: ${escapeHtml(event.actorRole)}</span>` : ''}
+                            ${event.oldValue ? `<span>Было: ${escapeHtml(event.oldValue)}</span>` : ''}
+                            ${event.newValue ? `<span>Стало: ${escapeHtml(event.newValue)}</span>` : ''}
+                        </div>
+                    </div>
+                </article>
+            `).join('')}
+        </div>
+    `;
+}
+
+function formatAuditAction(action) {
+    const actions = {
+        TICKET_CREATED: 'Создание тикета',
+        STATUS_CHANGED: 'Смена статуса',
+        TICKET_ASSIGNED: 'Назначение исполнителя',
+        COMMENT_ADDED: 'Комментарий',
+        ATTACHMENT_UPLOADED: 'Вложение',
+        TICKET_RESOLVED: 'Решение тикета',
+        TICKET_REOPENED: 'Переоткрытие тикета',
+        TICKET_CLOSED: 'Закрытие тикета',
+        SLA_BREACHED: 'Нарушение SLA',
+        USER_BLOCKED: 'Блокировка пользователя',
+        USER_ROLE_CHANGED: 'Изменение роли'
+    };
+
+    return actions[action] || action || '-';
 }
 
 function bindAttachmentEvents(box, ticketId) {
@@ -743,6 +820,10 @@ function canManageTicket(ticket) {
 }
 
 function canReopenTicket(ticket) {
+    if (ticket.status === 'CLOSED') {
+        return state.currentUser.role === 'ADMIN';
+    }
+
     if (ticket.status !== 'RESOLVED') {
         return false;
     }

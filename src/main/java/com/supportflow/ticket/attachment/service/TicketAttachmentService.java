@@ -1,5 +1,6 @@
 package com.supportflow.ticket.attachment.service;
 
+import com.supportflow.audit.service.AuditLogService;
 import com.supportflow.security.CurrentUserService;
 import com.supportflow.ticket.attachment.dto.TicketAttachmentFile;
 import com.supportflow.ticket.attachment.dto.TicketAttachmentResponse;
@@ -52,6 +53,7 @@ public class TicketAttachmentService {
     private final TicketRepository ticketRepository;
     private final CurrentUserService currentUserService;
     private final TicketAccessService ticketAccessService;
+    private final AuditLogService auditLogService;
 
     @Value("${app.upload-dir:uploads/ticket-attachments}")
     private String uploadDir;
@@ -100,6 +102,8 @@ public class TicketAttachmentService {
                     .build();
 
             attachmentRepository.save(attachment);
+
+            auditLogService.logAttachmentUploaded(ticket, currentUser, originalFilename);
 
             log.info(
                     "Ticket attachment uploaded: attachmentId={}, ticketId={}, uploadedById={}, filename={}",

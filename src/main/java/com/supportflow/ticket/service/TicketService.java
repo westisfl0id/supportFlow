@@ -1,5 +1,6 @@
     package com.supportflow.ticket.service;
 
+    import com.supportflow.audit.service.AuditLogService;
     import com.supportflow.exception.ForbiddenActionException;
     import com.supportflow.security.CurrentUserService;
     import com.supportflow.sla.service.SlaService;
@@ -41,15 +42,20 @@
         private final CurrentUserService currentUserService;
         private final TicketAccessService ticketAccessService;
         private final TicketStatusTransitionService ticketStatusTransitionService;
+        private final AuditLogService auditLogService;
 
         @Transactional
         public TicketResponse createTicket(Long userId, CreateTicketRequest request) {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new UserNotFoundException(userId));
 
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
             TicketEntity ticket = buildNewTicket(user, request);
 
             ticketRepository.save(ticket);
+
+            auditLogService.logTicketCreated(ticket, currentUser);
 
             return map(ticket);
         }
@@ -61,6 +67,8 @@
             TicketEntity ticket = buildNewTicket(currentUser, request);
 
             ticketRepository.save(ticket);
+
+            auditLogService.logTicketCreated(ticket, currentUser);
 
             log.info("Ticket created: ticketId={}, createdById={}, priority={}", ticket.getId(), currentUser.getId(), ticket.getPriority());
 
@@ -149,24 +157,53 @@
 
             UserEntity currentUser = currentUserService.getCurrentUser();
 
-            ticketAccessService.checkCanManageTicket(currentUser, ticket);
-            ticketStatusTransitionService.validateTransition(ticket.getStatus(), request.status());
-
             TicketStatus oldStatus = ticket.getStatus();
+            TicketStatus newStatus = request.status();
+
+            if (oldStatus == newStatus) {
+                return map(ticket);
+            }
+
+            boolean reopeningTicket =
+                    (oldStatus == TicketStatus.RESOLVED || oldStatus == TicketStatus.CLOSED)
+                            && newStatus == TicketStatus.IN_PROGRESS;
+
+            if (reopeningTicket) {
+                ticketAccessService.checkCanReopenTicket(currentUser, ticket);
+            } else {
+                ticketAccessService.checkCanManageTicket(currentUser, ticket);
+            }
+
+            ticketStatusTransitionService.validateTransition(oldStatus, newStatus);
+
             LocalDateTime now = LocalDateTime.now();
 
-            if (request.status() == TicketStatus.RESOLVED ) {
+            if (newStatus == TicketStatus.RESOLVED) {
                 if (ticket.getResolvedAt() == null) {
                     ticket.setResolvedAt(now);
                 }
 
                 if (ticket.getFirstRespondedAt() == null
-                        && currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN) {
-                    ticket.setResolvedAt(LocalDateTime.now());
+                        && (currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN)) {
+                    ticket.setFirstRespondedAt(now);
                 }
             }
 
-            ticket.setStatus(request.status());
+            if (reopeningTicket) {
+                ticket.setResolvedAt(null);
+            }
+
+            ticket.setStatus(newStatus);
+
+            if (newStatus == TicketStatus.RESOLVED) {
+                auditLogService.logTicketResolved(ticket, currentUser, oldStatus);
+            } else if (newStatus == TicketStatus.CLOSED) {
+                auditLogService.logTicketClosed(ticket, currentUser, oldStatus);
+            } else if (reopeningTicket) {
+                auditLogService.logTicketReopened(ticket, currentUser, oldStatus);
+            } else {
+                auditLogService.logStatusChanged(ticket, currentUser, oldStatus, newStatus);
+            }
 
             log.info("Ticket status changed: ticketId={}, oldStatus={}, newStatus={}, changedById={}", ticket.getId(), oldStatus, ticket.getStatus(), currentUser.getId());
 
@@ -197,11 +234,20 @@
 
             ticketAccessService.checkCanAssignTicket(currentUser, ticket, agent);
 
+            UserEntity oldAgent = ticket.getAssignedTo();
+            TicketStatus oldStatus = ticket.getStatus();
+
             ticket.setAssignedTo(agent);
 
             if (ticket.getStatus() == TicketStatus.NEW) {
                 ticketStatusTransitionService.validateTransition(TicketStatus.NEW, TicketStatus.OPEN);
                 ticket.setStatus(TicketStatus.OPEN);
+            }
+
+            auditLogService.logTicketAssigned(ticket, currentUser, oldAgent, agent);
+
+            if (oldStatus != ticket.getStatus()) {
+                auditLogService.logStatusChanged(ticket, currentUser, oldStatus, ticket.getStatus());
             }
 
             log.info("Ticket assigned: ticketId={}, agentId={}, changedById={}", ticket.getId(), agent.getId(), currentUser.getId());
@@ -238,16 +284,21 @@
             ticketAccessService.checkCanManageTicket(currentUser, ticket);
             ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.RESOLVED);
 
+            TicketStatus oldStatus = ticket.getStatus();
+            LocalDateTime now = LocalDateTime.now();
+
             if (ticket.getResolvedAt() == null) {
-                ticket.setResolvedAt(LocalDateTime.now());
+                ticket.setResolvedAt(now);
             }
 
             if (ticket.getFirstRespondedAt() == null
                     && (currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN)) {
-                ticket.setFirstRespondedAt(LocalDateTime.now());
+                ticket.setFirstRespondedAt(now);
             }
 
             ticket.setStatus(TicketStatus.RESOLVED);
+
+            auditLogService.logTicketResolved(ticket, currentUser, oldStatus);
 
             log.info("Ticket resolved: ticketId={}, resolvedById={}", ticket.getId(), currentUser.getId());
 
@@ -264,8 +315,12 @@
             ticketAccessService.checkCanReopenTicket(currentUser, ticket);
             ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.IN_PROGRESS);
 
+            TicketStatus oldStatus = ticket.getStatus();
+
             ticket.setStatus(TicketStatus.IN_PROGRESS);
             ticket.setResolvedAt(null);
+
+            auditLogService.logTicketReopened(ticket, currentUser, oldStatus);
 
             log.info("Ticket reopened: ticketId={}, reopenedById={}", ticket.getId(), currentUser.getId());
 
@@ -286,7 +341,11 @@
             ticketAccessService.checkCanManageTicket(currentUser, ticket);
             ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.CLOSED);
 
+            TicketStatus oldStatus = ticket.getStatus();
+
             ticket.setStatus(TicketStatus.CLOSED);
+
+            auditLogService.logTicketClosed(ticket, currentUser, oldStatus);
 
             log.info("Ticket closed: ticketId={}, closedById={}", ticket.getId(), currentUser.getId());
 
