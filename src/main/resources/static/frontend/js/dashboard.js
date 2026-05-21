@@ -65,6 +65,7 @@ function cacheElements() {
     elements.ticketPriority = document.getElementById('ticketPriority');
     elements.ticketCategory = document.getElementById('ticketCategory');
     elements.ticketAttachment = document.getElementById('ticketAttachment');
+    elements.ticketAttachmentText = document.getElementById('ticketAttachmentText');
 
     elements.ticketsTitle = document.getElementById('ticketsTitle');
     elements.ticketsSubtitle = document.getElementById('ticketsSubtitle');
@@ -148,6 +149,7 @@ function bindEvents() {
 
     elements.reloadUsersButton.addEventListener('click', refreshUsers);
     elements.reloadStatisticsButton.addEventListener('click', refreshStatistics);
+    elements.ticketAttachment.addEventListener('change', updateTicketAttachmentLabel);
 }
 
 function configurePageForRole() {
@@ -187,6 +189,8 @@ async function handleCreateTicket() {
         }
 
         elements.createTicketForm.reset();
+        updateTicketAttachmentLabel();
+
         elements.ticketPriority.value = 'MEDIUM';
         elements.ticketCategory.value = 'OTHER';
 
@@ -198,6 +202,22 @@ async function handleCreateTicket() {
     } catch (error) {
         showMessage(error.message, 'error');
     }
+}
+
+function updateTicketAttachmentLabel() {
+    const files = Array.from(elements.ticketAttachment.files);
+
+    if (!files.length) {
+        elements.ticketAttachmentText.textContent = 'Файлы не выбраны';
+        return;
+    }
+
+    if (files.length === 1) {
+        elements.ticketAttachmentText.textContent = `Выбран файл: ${files[0].name}`;
+        return;
+    }
+
+    elements.ticketAttachmentText.textContent = `Выбрано файлов: ${files.length}`;
 }
 
 async function refreshTickets() {
@@ -261,10 +281,10 @@ function renderTicketCard(ticket) {
                     <p class="ticket-description">${escapeHtml(ticket.description)}</p>
                 </div>
                 <div class="actions-row">
-                    <span class="badge">${ticket.status}</span>
-                    <span class="badge">${ticket.priority}</span>
-                    <span class="badge">${formatCategory(ticket.category)}</span>
-                    ${ticket.slaBreached ? '<span class="badge danger">SLA</span>' : ''}
+                    <span class="badge status-${ticket.status.toLowerCase()}">${ticket.status}</span>
+<span class="badge priority-${ticket.priority.toLowerCase()}">${ticket.priority}</span>
+<span class="badge category-badge">${formatCategory(ticket.category)}</span>
+${ticket.slaBreached ? '<span class="badge danger">SLA</span>' : ''}
                 </div>
             </div>
 

@@ -69,11 +69,22 @@
                 <textarea id="ticketDescription" rows="4" required></textarea>
             </label>
 
-            <label class="span-2">
-                Вложение
-                <input id="ticketAttachment" type="file" multiple>
-            </label>
+            <div class="span-2 file-field">
+                <span class="field-label">Вложение</span>
 
+                <input id="ticketAttachment" class="file-input-hidden" type="file" multiple hidden>
+
+                <label class="file-upload-card" for="ticketAttachment">
+                    <span class="file-upload-icon">📎</span>
+
+                    <span class="file-upload-content">
+                        <strong>Выбрать файлы</strong>
+                        <small>PDF, PNG, JPG, TXT, LOG до 10 MB</small>
+                    </span>
+                </label>
+
+                <p id="ticketAttachmentText" class="file-upload-hint">Файлы не выбраны</p>
+            </div>
 
             <button class="button primary" type="submit">Создать</button>
         </form>

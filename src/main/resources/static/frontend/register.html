@@ -16,17 +16,17 @@
         <form id="registerForm" class="form">
             <label>
                 Имя
-                <input id="name" type="text" autocomplete="name" required>
+                <input id="name" type="text" autocomplete="name" placeholder="Например: Иван Петров" minlength="2" required>
             </label>
 
             <label>
                 Email
-                <input id="email" type="email" autocomplete="email" required>
+                <input id="email" type="email" autocomplete="email" placeholder="ivan.petrov@example.com" required>
             </label>
 
             <label>
                 Пароль
-                <input id="password" type="password" autocomplete="new-password" required>
+                <input id="password" type="password" autocomplete="new-password" placeholder="Минимум 6 символов" minlength="6" required>
             </label>
 
             <button class="button primary full" type="submit">Создать аккаунт</button>
