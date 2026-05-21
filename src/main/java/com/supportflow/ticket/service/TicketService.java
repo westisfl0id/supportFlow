@@ -153,9 +153,17 @@
             ticketStatusTransitionService.validateTransition(ticket.getStatus(), request.status());
 
             TicketStatus oldStatus = ticket.getStatus();
+            LocalDateTime now = LocalDateTime.now();
 
-            if (request.status() == TicketStatus.RESOLVED && ticket.getResolvedAt() == null) {
-                ticket.setResolvedAt(LocalDateTime.now());
+            if (request.status() == TicketStatus.RESOLVED ) {
+                if (ticket.getResolvedAt() == null) {
+                    ticket.setResolvedAt(now);
+                }
+
+                if (ticket.getFirstRespondedAt() == null
+                        && currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN) {
+                    ticket.setResolvedAt(LocalDateTime.now());
+                }
             }
 
             ticket.setStatus(request.status());
@@ -181,11 +189,20 @@
                 throw new ForbiddenActionException("Нельзя назначить заблокированного агента");
             }
 
+            if (ticket.getStatus() == TicketStatus.CLOSED) {
+                throw new TicketAlreadyClosedException(ticketId);
+            }
+
             UserEntity currentUser = currentUserService.getCurrentUser();
 
             ticketAccessService.checkCanAssignTicket(currentUser, ticket, agent);
 
             ticket.setAssignedTo(agent);
+
+            if (ticket.getStatus() == TicketStatus.NEW) {
+                ticketStatusTransitionService.validateTransition(TicketStatus.NEW, TicketStatus.OPEN);
+                ticket.setStatus(TicketStatus.OPEN);
+            }
 
             log.info("Ticket assigned: ticketId={}, agentId={}, changedById={}", ticket.getId(), agent.getId(), currentUser.getId());
 
@@ -225,9 +242,30 @@
                 ticket.setResolvedAt(LocalDateTime.now());
             }
 
-            ticket.setStatus(TicketStatus.RESOLVED);
+            if (ticket.getFirstRespondedAt() == null
+                    && (currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN)) {
+                ticket.setStatus(TicketStatus.RESOLVED);
+            }
 
             log.info("Ticket resolved: ticketId={}, resolvedById={}", ticket.getId(), currentUser.getId());
+
+            return map(ticket);
+        }
+
+        @Transactional
+        public TicketResponse reopenTicket(Long id) {
+            TicketEntity ticket = ticketRepository.findById(id)
+                    .orElseThrow(() -> new TicketNotFoundException(id));
+
+            UserEntity currentUser = currentUserService.getCurrentUser();
+
+            ticketAccessService.checkCanReopenTicket(currentUser, ticket);
+            ticketStatusTransitionService.validateTransition(ticket.getStatus(), TicketStatus.IN_PROGRESS);
+
+            ticket.setStatus(TicketStatus.IN_PROGRESS);
+            ticket.setResolvedAt(null);
+
+            log.info("Ticket reopened: ticketId={}, reopenedById={}", ticket.getId(), currentUser.getId());
 
             return map(ticket);
         }

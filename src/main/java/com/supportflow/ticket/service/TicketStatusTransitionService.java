@@ -14,7 +14,7 @@ public class TicketStatusTransitionService {
             TicketStatus.OPEN, Set.of(TicketStatus.IN_PROGRESS, TicketStatus.WAITING, TicketStatus.RESOLVED),
             TicketStatus.IN_PROGRESS, Set.of(TicketStatus.WAITING, TicketStatus.RESOLVED),
             TicketStatus.WAITING, Set.of(TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED),
-            TicketStatus.RESOLVED, Set.of(TicketStatus.CLOSED),
+            TicketStatus.RESOLVED, Set.of(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED),
             TicketStatus.CLOSED, Set.of()
     );
 

@@ -103,6 +103,11 @@ public class TicketController {
         return ticketService.resolveTicket(id);
     }
 
+    @PatchMapping("/tickets/{id}/reopen")
+    public TicketResponse reopenTicket(@PathVariable @Positive Long id) {
+        return ticketService.reopenTicket(id);
+    }
+
     @PatchMapping("/tickets/{id}/close")
     public TicketResponse closeTicket(@PathVariable @Positive Long id) {
         return ticketService.closeTicket(id);

@@ -42,7 +42,8 @@ public class CommentService {
             throw new TicketAlreadyClosedException(ticketId);
         }
 
-        if (currentUser.getRole() == UserRole.AGENT && ticket.getFirstRespondedAt() == null) {
+        if ((currentUser.getRole() == UserRole.AGENT || currentUser.getRole() == UserRole.ADMIN)
+                && ticket.getFirstRespondedAt() == null) {
             ticket.setFirstRespondedAt(LocalDateTime.now());
         }
 

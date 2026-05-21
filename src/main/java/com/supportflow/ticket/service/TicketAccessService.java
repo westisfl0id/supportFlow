@@ -2,6 +2,7 @@ package com.supportflow.ticket.service;
 
 import com.supportflow.exception.ForbiddenActionException;
 import com.supportflow.ticket.entity.TicketEntity;
+import com.supportflow.ticket.enums.TicketStatus;
 import com.supportflow.user.entity.UserEntity;
 import com.supportflow.user.enums.UserRole;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class TicketAccessService {
             && ticket.getAssignedTo().getId().equals(user.getId())) {
             return;
         }
+
         throw new ForbiddenActionException("Only admin or assigned agent can manage this ticket");
     }
 
@@ -61,5 +63,23 @@ public class TicketAccessService {
             }
         }
         throw new ForbiddenActionException("Agent can assign only unassigned tickets to himself");
+    }
+
+    public void checkCanReopenTicket(UserEntity user, TicketEntity ticket) {
+        if (user.getRole() == UserRole.ADMIN) {
+            return;
+        }
+
+        if (user.getRole() == UserRole.AGENT
+                && ticket.getAssignedTo() != null
+                && ticket.getAssignedTo().getId().equals(user.getId())) {
+            return;
+        }
+
+        if (ticket.getCreatedBy().getId().equals(user.getId())) {
+            return;
+        }
+
+        throw new ForbiddenActionException("Only ticket owner, assigned agent or admin can reopen ticket");
     }
 }
