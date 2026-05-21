@@ -4,10 +4,11 @@ import {
     assignTicket,
     closeTicket,
     createTicket,
+    getAvailableStatuses,
     loadSlaBreachedTickets,
     loadTickets,
+    reopenTicket,
     resolveTicket,
-    TICKET_STATUSES,
     updateTicketStatus
 } from './tickets.js';
 import {
@@ -247,7 +248,9 @@ function updateTicketPagination(page) {
 function renderTicketCard(ticket) {
     const canManage = canManageTicket(ticket);
     const canAssign = canAssignTicket(ticket);
-    const statusOptions = TICKET_STATUSES.map(status => `
+    const canClose = canCloseTicket(ticket);
+    const canReopen = canReopenTicket(ticket);
+    const statusOptions = getAvailableStatuses(ticket.status).map(status => `
         <option value="${status}" ${ticket.status === status ? 'selected' : ''}>${status}</option>
     `).join('');
 
@@ -284,6 +287,14 @@ function renderTicketCard(ticket) {
                     </select>
                     <button class="button secondary small resolve-button" data-ticket-id="${ticket.id}" type="button">Resolve</button>
                     <button class="button secondary small close-button" data-ticket-id="${ticket.id}" type="button">Close</button>
+                ` : ''}
+                
+                ${canClose ? `
+                    <button class="button secondary small close-button" data-ticket-id="${ticket.id}" type="button">Close</button>
+                ` : ''}
+                
+                ${canReopen ? `
+                    <button class="button secondary small reopen-button" data-ticket-id="${ticket.id}" type="button">Вернуть в работу</button>
                 ` : ''}
 
                 ${canAssign ? renderAssignControls(ticket) : ''}
@@ -405,6 +416,12 @@ function bindTicketActionEvents() {
     document.querySelectorAll('.close-button').forEach(button => {
         button.addEventListener('click', async () => {
             await handleTicketAction(() => closeTicket(button.dataset.ticketId));
+        });
+    });
+
+    document.querySelectorAll('.reopen-button').forEach(button => {
+        button.addEventListener('click', async () => {
+            await handleTicketAction(() => reopenTicket(button.dataset.ticketId));
         });
     });
 
@@ -725,6 +742,22 @@ function canManageTicket(ticket) {
     return state.currentUser.role === 'AGENT' && ticket.assignedToId === state.currentUser.id;
 }
 
+function canReopenTicket(ticket) {
+    if (ticket.status !== 'RESOLVED') {
+        return false;
+    }
+
+    if (state.currentUser.role === 'ADMIN') {
+        return true;
+    }
+
+    if (state.currentUser.role === 'AGENT' && ticket.assignedToId === state.currentUser.id) {
+        return true;
+    }
+
+    return ticket.createById === state.currentUser.id;
+}
+
 function canAssignTicket(ticket) {
     if (state.currentUser.role === 'ADMIN') {
         return true;
@@ -735,6 +768,19 @@ function canAssignTicket(ticket) {
     }
 
     return ticket.assignedToId === null || ticket.assignedToId === state.currentUser.id;
+}
+
+function canCloseTicket(ticket) {
+    if (ticket.status !== 'RESOLVED') {
+        return false;
+    }
+
+    if (state.currentUser.role === 'ADMIN') {
+        return true;
+    }
+
+    return state.currentUser.role === 'AGENT'
+        && ticket.assignedToId === state.currentUser.id;
 }
 
 function readFilters() {

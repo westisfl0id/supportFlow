@@ -9,6 +9,22 @@ export const TICKET_STATUSES = [
     'CLOSED'
 ];
 
+export const ALLOWED_STATUS_TRANSITIONS = {
+    NEW: ['OPEN', 'IN_PROGRESS'],
+    OPEN: ['IN_PROGRESS', 'WAITING', 'RESOLVED'],
+    IN_PROGRESS: ['WAITING', 'RESOLVED'],
+    WAITING: ['IN_PROGRESS', 'RESOLVED'],
+    RESOLVED: ['IN_PROGRESS', 'CLOSED'],
+    CLOSED: []
+};
+
+export function getAvailableStatuses(currentStatus) {
+    return [
+        currentStatus,
+        ...(ALLOWED_STATUS_TRANSITIONS[currentStatus] || [])
+    ];
+}
+
 export async function loadTickets(currentUser, filters = {}, page = 0, size = 10) {
     const params = new URLSearchParams();
 
@@ -55,4 +71,8 @@ export async function resolveTicket(ticketId) {
 
 export async function closeTicket(ticketId) {
     return patch(`/tickets/${ticketId}/close`);
+}
+
+export async function reopenTicket(ticketId) {
+    return patch(`/tickets/${ticketId}/reopen`);
 }
