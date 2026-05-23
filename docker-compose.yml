@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: supportflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - supportflow-postgres-data:/var/lib/postgresql/data
+    networks:
+      - supportflow-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supportflow-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT}:8080"
+    volumes:
+      - supportflow-uploads:/app/uploads
+    networks:
+      - supportflow-net
+
+volumes:
+  supportflow-postgres-data:
+  supportflow-uploads:
+
+networks:
+  supportflow-net:
+    driver: bridge

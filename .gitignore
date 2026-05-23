@@ -26,6 +26,10 @@ build/
 # Logs
 *.log
 
+# Local environment variables
+.env
+.env.local
+
 # Temporary files
 *.tmp
 
@@ -50,3 +54,9 @@ build/
 ### VS Code ###
 .vscode/
 
+# Runtime uploads
+uploads/
+
+# Accidental archives
+*.zip
+EOF
