@@ -1,6 +1,13 @@
 # SupportFlow
 
-SupportFlow — серверное приложение для автоматизации работы службы поддержки.
+[![Java](https://img.shields.io/badge/Java-21-orange)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-green)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://www.postgresql.org/)
+[![Flyway](https://img.shields.io/badge/Flyway-9.22.0-lightgrey)](https://flywaydb.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+SupportFlow — это веб-приложение для управления заявками службы поддержки, позволяющее пользователям создавать обращения, а сотрудникам — обрабатывать их, оставлять комментарии, прикреплять файлы и отслеживать историю действий в реальном времени.
 
 Система позволяет пользователям создавать заявки, а сотрудникам поддержки обрабатывать их, менять статусы, назначать ответственных, оставлять комментарии, прикреплять файлы и отслеживать историю обработки обращений.
 
@@ -17,52 +24,114 @@ SupportFlow — серверное приложение для автомати�
 - история действий по заявке;
 - SLA-дедлайны;
 - статистика по заявкам;
-- документация API через Swagger UI;
+- документация API через Swagger UI и OpenAPI;
 - запуск проекта через Docker Compose;
 - миграции базы данных через Flyway;
-- unit-тесты сервисов и контроллеров.
+- unit-тесты сервисов и контроллеров;
+- интеграционные тесты с Testcontainers для проверки работы с PostgreSQL.
 
-## Технологии
+## 🛠 Технологический стек
 
-- Java 17
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- PostgreSQL
-- Flyway
-- Maven
-- Docker
-- Docker Compose
-- JUnit 5
-- Mockito
-- MockMvc
-- Swagger / OpenAPI
+| Технология         | Версия / Описание                      |
+|--------------------|----------------------------------------|
+| Java               | 21                                     |
+| Spring Boot        | 4.0.6                                  |
+| Spring Security    | JWT (jjwt 0.12.6)                      |
+| Spring Data JPA    | Hibernate ORM                          |
+| PostgreSQL         | 16                                     |
+| Flyway             | Миграции схемы БД                      |
+| springdoc-openapi  | 3.0.2 — Swagger UI                     |
+| Lombok             | Генерация boilerplate-кода             |
+| Docker             | Dockerfile + Docker Compose            |
+| JUnit 5 + Mockito  | Unit-тесты                             |
+| Testcontainers     | Интеграционные тесты с PostgreSQL      |
+| JaCoCo             | 0.8.13 — покрытие кода                 |
 
 ## Структура проекта
 
 ```text
-src/main/java/com/supportflow
-├── controllers      # REST-контроллеры
-├── dto              # DTO для запросов и ответов
-├── entities         # JPA-сущности
-├── repositories     # Репозитории для работы с БД
-├── security         # JWT и настройки безопасности
-├── services         # Бизнес-логика
-└── config           # Конфигурация приложения
+
+├ src/main/java/com/supportflow
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── com/supportflow
+│   │   │       ├── audit
+│   │   │       │   ├── controller      # Контроллеры для аудита
+│   │   │       │   ├── dto             # DTO для аудита
+│   │   │       │   ├── entity          # JPA-сущности для аудита
+│   │   │       │   ├── enums           # Перечисления для аудита
+│   │   │       │   ├── repository      # Репозитории для аудита
+│   │   │       │   └── service         # Сервисы аудита
+│   │   │       ├── auth
+│   │   │       │   ├── controller      # Контроллеры аутентификации
+│   │   │       │   ├── dto             # DTO для логина и регистрации
+│   │   │       │   └── service         # Сервисы аутентификации
+│   │   │       ├── comment
+│   │   │       │   ├── controller      # Контроллеры комментариев
+│   │   │       │   ├── dto             # DTO для комментариев
+│   │   │       │   └── service         # Сервисы комментариев
+│   │   │       ├── exception           # Общие исключения приложения
+│   │   │       ├── security
+│   │   │       │   ├── jwt             # JWT-сервисы
+│   │   │       │   ├── CurrentUserService.java
+│   │   │       │   ├── CustomUserDetailsService.java
+│   │   │       │   ├── OpenApiConfig.java
+│   │   │       │   └── SecurityConfig.java
+│   │   │       ├── sla
+│   │   │       │   ├── scheduler       # Планировщики SLA
+│   │   │       │   └── service         # Сервисы SLA
+│   │   │       ├── statistics
+│   │   │       │   ├── controller      # Контроллеры статистики
+│   │   │       │   ├── dto             # DTO статистики
+│   │   │       │   └── service         # Сервисы статистики
+│   │   │       ├── ticket
+│   │   │       │   ├── attachment      # Работа с вложениями
+│   │   │       │   ├── controller      # Контроллеры заявок
+│   │   │       │   ├── dto             # DTO для заявок
+│   │   │       │   ├── entity          # JPA-сущности заявок
+│   │   │       │   ├── enums           # Перечисления заявок
+│   │   │       │   ├── exception       # Исключения заявок
+│   │   │       │   ├── repository      # Репозитории заявок
+│   │   │       │   ├── service         # Сервисы заявок
+│   │   │       │   └── specification   # Спецификации для запросов
+│   │   │       ├── user
+│   │   │       │   ├── controller      # Контроллеры пользователей
+│   │   │       │   ├── dto             # DTO пользователей
+│   │   │       │   ├── entity          # JPA-сущности пользователей
+│   │   │       │   ├── enums           # Перечисления пользователей
+│   │   │       │   ├── exception       # Исключения пользователей
+│   │   │       │   ├── repository      # Репозитории пользователей
+│   │   │       │   └── service         # Сервисы пользователей
+│   │   │       └── TicketSystemApplication.java  # Главный класс приложения
+│   │   └── resources
+│   │       ├── db/migration            # Flyway-миграции
+│   │       │   ├── V1__init_schema.sql
+│   │       │   └── V2__seed_admin.sql
+│   │       ├── static/frontend         # Frontend-страницы
+│   │       │   ├── css
+│   │       │   │   └── styles.css
+│   │       │   └── js
+│   │       │       ├── api.js
+│   │       │       ├── attachments.js
+│   │       │       ├── auth.js
+│   │       │       └── comments.js
+│   │       ├── templates               
+│   │       ├── application.properties
+│   │       └── application.properties.example
+│   └── test
+│       └── java/com/supportflow
+│           ├── integration              # Интеграционные тесты (с Testcontainers)
+│           └── unittests
+│               └── controller           # Unit-тесты контроллеров
 ```
 
-```text
-src/main/resources
-├── db/migration     # Flyway-миграции
-├── static/frontend  # frontend-страницы
-└── application.properties.example
-```
 
 ## Требования
 
 Для запуска проекта нужны:
 
-- Java 17;
+- Java 21;
 - Maven или Maven Wrapper;
 - Docker;
 - Docker Compose;
@@ -70,7 +139,8 @@ src/main/resources
 
 ## Переменные окружения
 
-Для Docker-запуска нужно создать файл `.env` в корне проекта.
+
+Для запуска через Docker нужно создать файл `.env` в корне проекта.
 
 Пример `.env`:
 
@@ -136,6 +206,7 @@ docker compose down -v
 ```
 
 ## Локальный запуск без Docker
+Убедитесь, что PostgreSQL запущен локально.
 
 Создать базу данных PostgreSQL:
 
@@ -150,6 +221,16 @@ cp src/main/resources/application.properties.example src/main/resources/applicat
 ```
 
 В `application.properties` нужно указать свои настройки подключения к базе данных и JWT-секрет.
+
+```
+spring.datasource.url=jdbc:postgresql://localhost:5432/supportflow
+spring.datasource.username=postgres
+spring.datasource.password=your_postgres_password
+
+spring.jpa.hibernate.ddl-auto=validate
+jwt.secret-key=your_long_secret_key_at_least_32_characters
+jwt.expiration-ms=86400000
+```
 
 Запустить приложение:
 
@@ -167,13 +248,17 @@ cp src/main/resources/application.properties.example src/main/resources/applicat
 src/main/resources/db/migration
 ```
 
-Основная миграция:
+Миграции Flyway:
 
 ```text
-V1__init_schema.sql
+V1__init_schema.sql # Создание основной структуры базы данных
 ```
 
-При запуске приложения Flyway автоматически создаёт структуру базы данных.
+```text
+V2_seed_admin.sql # Добавление учетной записи администратора
+```
+
+При запуске приложения Flyway автоматически применяет все миграции, создавая необходимую структуру базы данных и добавляя начальные данные (например, администратора).
 
 Hibernate работает в режиме:
 
@@ -181,9 +266,11 @@ Hibernate работает в режиме:
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-Это значит, что Hibernate не создаёт таблицы сам, а только проверяет, что структура базы данных соответствует сущностям проекта.
+Это означает, что Hibernate не создаёт таблицы автоматически, а только проверяет соответствие структуры базы данных JPA-сущностям проекта.
 
 ## Тесты
+
+В проекте добавлены unit-тесты для сервисов и контроллеров, а также интеграционные тесты с использованием Testcontainers, которые позволяют запускать тестовую базу PostgreSQL в контейнере и проверять работу приложения в условиях, близких к продакшену.
 
 Запуск тестов:
 
@@ -195,14 +282,15 @@ spring.jpa.hibernate.ddl-auto=validate
 
 Покрываются основные части приложения:
 
-- авторизация;
-- пользователи;
-- заявки;
-- комментарии;
-- SLA;
-- проверка доступа к заявкам;
-- переходы между статусами;
-- REST-контроллеры.
+- Авторизация пользователей;
+- Управление пользователями и ролями;
+- Создание и просмотр заявок;
+- Добавление и получение комментариев;
+- Контроль SLA и дедлайнов;
+- Проверка прав доступа к заявкам;
+- Переходы между статусами заявок;
+- Валидация REST-контроллеров;
+- Проверка миграций Flyway и начальных данных (например, администратора) через интеграционные тесты.
 
 ## Основные API endpoints
 
@@ -319,12 +407,6 @@ spring.jpa.hibernate.ddl-auto=validate
 
 ```bash
 docker compose up --build
-```
-
-Проверить статус git:
-
-```bash
-git status
 ```
 
 Для примера настроек используется файл:

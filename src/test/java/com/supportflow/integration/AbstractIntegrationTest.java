@@ -1,28 +1,16 @@
 package com.supportflow.integration;
 
+import com.supportflow.TicketSystemApplication;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(classes = com.supportflow.TicketSystemApplication.class)
-@Testcontainers
-
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@SpringBootTest(classes = TicketSystemApplication.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-
+@AutoConfigureMockMvc
 public abstract class AbstractIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("supportflow_test")
-            .withUsername("postgres")
-            .withPassword("postgres");
+    @Autowired
+    protected MockMvc mockMvc;
 }
