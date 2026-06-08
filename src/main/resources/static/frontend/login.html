@@ -13,15 +13,15 @@
         <h1>Вход</h1>
         <p class="muted">Введите email и пароль</p>
 
-        <form id="loginForm" class="form">
+        <form id="loginForm" class="form" novalidate>
             <label>
                 Email
-                <input id="email" type="email" autocomplete="email" required>
+                <input id="email" type="email" autocomplete="email" placeholder="Введите email" maxlength="120" required>
             </label>
 
             <label>
                 Пароль
-                <input id="password" type="password" autocomplete="current-password" required>
+                <input id="password" type="password" autocomplete="current-password" placeholder="Введите пароль" minlength="6" maxlength="72" required>
             </label>
 
             <button class="button primary full" type="submit">Войти</button>
@@ -31,7 +31,7 @@
             Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
         </p>
 
-        <p id="message" class="message" aria-live="polite"></p>
+        <p id="message" class="message hidden" aria-live="polite"></p>
     </section>
 </main>
 

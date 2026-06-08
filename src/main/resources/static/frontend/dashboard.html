@@ -39,7 +39,7 @@
         <form id="createTicketForm" class="grid-form">
             <label>
                 Заголовок
-                <input id="ticketTitle" type="text" required>
+                <input id="ticketTitle" type="text" minlength="5" maxlength="150" required>
             </label>
 
             <label>
@@ -66,13 +66,13 @@
 
             <label class="span-2">
                 Описание
-                <textarea id="ticketDescription" rows="4" required></textarea>
+                <textarea id="ticketDescription" rows="4" minlength="10" maxlength="3000" required></textarea>
             </label>
 
             <div class="span-2 file-field">
                 <span class="field-label">Вложение</span>
 
-                <input id="ticketAttachment" class="file-input-hidden" type="file" multiple hidden>
+                <input id="ticketAttachment" class="file-input-hidden" type="file" accept=".pdf,.png,.jpg,.jpeg,.txt,.log" multiple hidden>
 
                 <label class="file-upload-card" for="ticketAttachment">
                     <span class="file-upload-icon">📎</span>

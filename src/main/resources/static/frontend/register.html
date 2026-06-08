@@ -13,7 +13,7 @@
         <h1>Регистрация</h1>
         <p class="muted">После регистрации будет создан обычный пользователь USER</p>
 
-        <form id="registerForm" class="form">
+        <form id="registerForm" class="form" novalidate>
             <label>
                 Имя
                 <input id="name" type="text" autocomplete="name" placeholder="Например: Иван Петров" minlength="2" required>
@@ -21,12 +21,17 @@
 
             <label>
                 Email
-                <input id="email" type="email" autocomplete="email" placeholder="ivan.petrov@example.com" required>
+                <input id="email" type="email" autocomplete="email" placeholder="ivan.petrov@mail.com" required>
             </label>
 
             <label>
                 Пароль
                 <input id="password" type="password" autocomplete="new-password" placeholder="Минимум 6 символов" minlength="6" required>
+            </label>
+
+            <label>
+                Повторите пароль
+                <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Повторите пароль" minlength="6" maxlength="72" required>
             </label>
 
             <button class="button primary full" type="submit">Создать аккаунт</button>
@@ -36,7 +41,7 @@
             Уже есть аккаунт? <a href="login.html">Войти</a>
         </p>
 
-        <p id="message" class="message" aria-live="polite"></p>
+        <p id="message" class="message hidden" aria-live="polite"></p>
     </section>
 </main>
 

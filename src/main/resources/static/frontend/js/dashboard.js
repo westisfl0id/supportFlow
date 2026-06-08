@@ -31,6 +31,9 @@ const state = {
 };
 
 const elements = {};
+const MAX_ATTACHMENT_COUNT = 5;
+const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'txt', 'log'];
 
 initDashboard();
 
@@ -174,15 +177,23 @@ function configurePageForRole() {
 }
 
 async function handleCreateTicket() {
+    const title = elements.ticketTitle.value.trim();
+    const description = elements.ticketDescription.value.trim();
+    const files = elements.ticketAttachment.files;
+    const validationError = validateTicketForm(title, description) || validateFiles(files);
+
+    if (validationError) {
+        showMessage(validationError, 'error');
+        return;
+    }
+
     try {
-        const ticket  = await createTicket(
-            elements.ticketTitle.value.trim(),
-            elements.ticketDescription.value.trim(),
+        const ticket = await createTicket(
+            title,
+            description,
             elements.ticketPriority.value,
             elements.ticketCategory.value
         );
-
-        const files = elements.ticketAttachment.files;
 
         if (files.length > 0) {
             await uploadTicketAttachments(ticket.id, files);
@@ -190,22 +201,24 @@ async function handleCreateTicket() {
 
         elements.createTicketForm.reset();
         updateTicketAttachmentLabel();
+        showMessage('Обращение создано.', 'success');
 
-        elements.ticketPriority.value = 'MEDIUM';
-        elements.ticketCategory.value = 'OTHER';
-
-        showMessage(
-            files.length > 0 ?  'Тикет создан, вложения загружены.' : 'Тикет создан.', 'success');
-
-        await refreshStatistics();
         await refreshTickets();
+        await refreshStatistics();
     } catch (error) {
-        showMessage(error.message, 'error');
+        showMessage(error.message || 'Не удалось создать обращение.', 'error');
     }
 }
 
 function updateTicketAttachmentLabel() {
     const files = Array.from(elements.ticketAttachment.files);
+
+    const validationError = validateFiles(files);
+
+    if (validationError) {
+        elements.ticketAttachmentText.textContent = validationError;
+        return;
+    }
 
     if (!files.length) {
         elements.ticketAttachmentText.textContent = 'Файлы не выбраны';
@@ -218,6 +231,68 @@ function updateTicketAttachmentLabel() {
     }
 
     elements.ticketAttachmentText.textContent = `Выбрано файлов: ${files.length}`;
+}
+
+function validateTicketForm(title, description) {
+    if (!title) {
+        return 'Введите заголовок тикета.';
+    }
+
+    if (title.length < 5) {
+        return 'Заголовок должен содержать минимум 5 символов.';
+    }
+
+    if (title.length > 150) {
+        return 'Заголовок не должен быть длиннее 150 символов.';
+    }
+
+    if (!description) {
+        return 'Введите описание проблемы.';
+    }
+
+    if (description.length < 10) {
+        return 'Описание должно содержать минимум 10 символов.';
+    }
+
+    if (description.length > 3000) {
+        return 'Описание не должно быть длиннее 3000 символов.';
+    }
+
+    return null;
+}
+
+function validateFiles(files) {
+    const fileList = Array.from(files || []);
+
+    if (fileList.length > MAX_ATTACHMENT_COUNT) {
+        return `Можно загрузить не больше ${MAX_ATTACHMENT_COUNT} файлов за раз.`;
+    }
+
+    for (const file of fileList) {
+        const extension = file.name.split('.').pop()?.toLowerCase();
+
+        if (!extension || !ALLOWED_ATTACHMENT_EXTENSIONS.includes(extension)) {
+            return `Недопустимый тип файла: ${file.name}. Разрешены PDF, PNG, JPG, TXT, LOG.`;
+        }
+
+        if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+            return `Файл ${file.name} больше 10 MB.`;
+        }
+    }
+
+    return null;
+}
+
+function validateComment(message) {
+    if (!message) {
+        return 'Введите комментарий.';
+    }
+
+    if (message.length > 3000) {
+        return 'Комментарий не должен быть длиннее 3000 символов.';
+    }
+
+    return null;
 }
 
 async function refreshTickets() {
@@ -516,7 +591,10 @@ async function toggleComments(ticketId) {
             const textarea = form.querySelector('textarea');
             const message = textarea.value.trim();
 
-            if (!message) {
+            const validationError = validateComment(message);
+
+            if (validationError) {
+                showMessage(validationError, 'error');
                 return;
             }
 
