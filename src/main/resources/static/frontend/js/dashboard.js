@@ -327,7 +327,10 @@ function renderTickets(tickets) {
         return;
     }
 
-    elements.ticketsContainer.innerHTML = tickets.map(renderTicketCard).join('');
+    elements.ticketsContainer.innerHTML = tickets
+        .map((ticket, index) => renderTicketCard(ticket, index + 1))
+        .join('');
+
     bindTicketActionEvents();
 }
 
@@ -339,7 +342,10 @@ function updateTicketPagination(page) {
     elements.nextTicketsPageButton.disabled = page.last;
 }
 
-function renderTicketCard(ticket) {
+function renderTicketCard(ticket, visibleNumber) {
+    const ticketNumber = state.currentUser.role === 'USER'
+        ? visibleNumber
+        : ticket.id;
     const canManage = canManageTicket(ticket);
     const canAssign = canAssignTicket(ticket);
     const canClose = canCloseTicket(ticket);
@@ -348,18 +354,19 @@ function renderTicketCard(ticket) {
         <option value="${status}" ${ticket.status === status ? 'selected' : ''}>${status}</option>
     `).join('');
 
+
     return `
         <article class="ticket-card ${ticket.slaBreached ? 'sla-breached' : ''}" data-ticket-id="${ticket.id}">
             <div class="ticket-header">
                 <div>
-                    <h3 class="ticket-title">#${ticket.id} · ${escapeHtml(ticket.title)}</h3>
+                    <h3 class="ticket-title">#${ticketNumber} · ${escapeHtml(ticket.title)}</h3>
                     <p class="ticket-description">${escapeHtml(ticket.description)}</p>
                 </div>
                 <div class="actions-row">
                     <span class="badge status-${ticket.status.toLowerCase()}">${ticket.status}</span>
-<span class="badge priority-${ticket.priority.toLowerCase()}">${ticket.priority}</span>
-<span class="badge category-badge">${formatCategory(ticket.category)}</span>
-${ticket.slaBreached ? '<span class="badge danger">SLA</span>' : ''}
+                    <span class="badge priority-${ticket.priority.toLowerCase()}">${ticket.priority}</span>
+                    <span class="badge category-badge">${formatCategory(ticket.category)}</span>
+                       ${ticket.slaBreached ? '<span class="badge danger">SLA</span>' : ''}
                 </div>
             </div>
 

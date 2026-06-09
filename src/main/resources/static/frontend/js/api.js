@@ -1,6 +1,6 @@
 import { clearAuth, getToken } from './storage.js';
 
-export const API_BASE_URL = '';
+export const API_BASE_URL = 'http://localhost:8080';
 
 function buildUrl(path, params = {}) {
     const baseUrl = API_BASE_URL || window.location.origin;
