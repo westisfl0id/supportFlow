@@ -32,7 +32,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/", "/frontend/**", "/favicon.ico").permitAll()
+//                        .requestMatchers("/", "/frontend/**", "/favicon.ico").permitAll()
+                                .requestMatchers(
+                                        "/",
+                                        "/index.html",
+                                        "/favicon.ico",
+                                        "/static/**",
+                                        "/css/**",
+                                        "/js/**",
+                                        "/images/**"
+                                ).permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users/**").hasRole("ADMIN")
