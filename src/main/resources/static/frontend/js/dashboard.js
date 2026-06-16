@@ -307,11 +307,23 @@ async function refreshTickets() {
                 state.ticketPage,
                 state.ticketSize);
 
-        const tickets = response.content || response;
+        const tickets = Array.isArray(response)
+            ? response
+            : (response.content ?? []);
 
-        if (response.content) {
-            state.ticketTotalPages = response.totalPages;
-            updateTicketPagination(response);
+        const pageMeta = response?.page ?? (!Array.isArray(response) && response?.content ? response : null);
+
+        if (pageMeta) {
+            state.ticketTotalPages = pageMeta.totalPages ?? 1;
+            updateTicketPagination(pageMeta);
+        } else {
+            state.ticketTotalPages = 1;
+            updateTicketPagination({
+                number: 0,
+                totalPages: 1,
+                first: true,
+                last: true
+            });
         }
 
         renderTickets(tickets);
@@ -335,11 +347,17 @@ function renderTickets(tickets) {
 }
 
 function updateTicketPagination(page) {
-    elements.ticketPageInfo.textContent =
-        `Страница ${page.number + 1} из ${page.totalPages || 1}`;
+    const number = Number(page.number ?? 0);
+    const totalPages = Number(page.totalPages ?? 1) || 1;
 
-    elements.prevTicketsPageButton.disabled = page.first;
-    elements.nextTicketsPageButton.disabled = page.last;
+    elements.ticketPageInfo.textContent =
+        `Страница ${number + 1} из ${totalPages}`;
+
+    elements.prevTicketsPageButton.disabled =
+        page.first ?? number <= 0;
+
+    elements.nextTicketsPageButton.disabled =
+        page.last ?? number + 1 >= totalPages;
 }
 
 function renderTicketCard(ticket, visibleNumber) {
